@@ -6,10 +6,10 @@ void main() {
   testWidgets('App renders without crashing', (WidgetTester tester) async {
     await tester.pumpWidget(
       const ProviderScope(
-        child: LocalMusicPlayerApp(),
+        child: VerseMusicApp(),
       ),
     );
 
-    expect(find.text('Local Music Player'), findsOneWidget);
+    expect(find.text('Verse'), findsOneWidget);
   });
 }
