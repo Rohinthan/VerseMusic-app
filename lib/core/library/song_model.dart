@@ -11,6 +11,8 @@ class Song {
   final Duration duration;
   final int? trackNumber;
   final Uint8List? embeddedArt;
+  final String? artPath;
+  final int fileModifiedMs;
 
   const Song({
     required this.id,
@@ -21,6 +23,8 @@ class Song {
     required this.duration,
     this.trackNumber,
     this.embeddedArt,
+    this.artPath,
+    this.fileModifiedMs = 0,
   });
 
   /// Deterministic ID from file path
@@ -37,6 +41,8 @@ class Song {
     Duration? duration,
     int? trackNumber,
     Uint8List? embeddedArt,
+    String? artPath,
+    int? fileModifiedMs,
   }) {
     return Song(
       id: id ?? this.id,
@@ -47,6 +53,8 @@ class Song {
       duration: duration ?? this.duration,
       trackNumber: trackNumber ?? this.trackNumber,
       embeddedArt: embeddedArt ?? this.embeddedArt,
+      artPath: artPath ?? this.artPath,
+      fileModifiedMs: fileModifiedMs ?? this.fileModifiedMs,
     );
   }
 
@@ -59,6 +67,8 @@ class Song {
       'album': album,
       'durationMs': duration.inMilliseconds,
       'trackNumber': trackNumber,
+      'artPath': artPath,
+      'fileModifiedMs': fileModifiedMs,
     };
   }
 
@@ -72,6 +82,8 @@ class Song {
       duration: Duration(milliseconds: map['durationMs'] as int? ?? 0),
       trackNumber: map['trackNumber'] as int?,
       embeddedArt: art,
+      artPath: map['artPath'] as String?,
+      fileModifiedMs: map['fileModifiedMs'] as int? ?? 0,
     );
   }
 
