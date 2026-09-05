@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/playback/playback_provider.dart';
+import 'album_art_widget.dart';
 import 'animated_equalizer.dart';
 import 'dynamic_now_playing_sheet.dart';
 
@@ -58,23 +59,11 @@ class DynamicMiniPlayer extends ConsumerWidget {
                   // Album Art Thumbnail
                   Hero(
                     tag: 'now_playing_art_${song.id}',
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        color: const Color(0xFF333333),
-                        child: song.embeddedArt != null
-                            ? Image.memory(
-                                song.embeddedArt!,
-                                fit: BoxFit.cover,
-                              )
-                            : const Icon(
-                                Icons.music_note_rounded,
-                                color: Colors.white54,
-                                size: 24,
-                              ),
-                      ),
+                    child: AlbumArtWidget(
+                      song: song,
+                      size: 44,
+                      borderRadius: 6,
+                      iconSize: 22,
                     ),
                   ),
                   const SizedBox(width: 12),
