@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:id3/id3.dart';
 import 'package:path/path.dart' as p;
+import '../storage/database_service.dart';
 import 'library_scanner.dart';
 import 'song_model.dart';
 
@@ -15,11 +16,22 @@ class LinuxLibraryScanner implements LibraryScanner {
     '.ogg',
   };
 
+  final DatabaseService _dbService = DatabaseService();
+
   @override
   Future<List<Song>> scanLibrary({List<String>? directories}) async {
     final dirsToScan = directories ?? _getDefaultDirectories();
     final List<Song> songs = [];
     final Set<String> seenPaths = {};
+
+    // 1. Fetch cached modification times and existing songs from SQLite
+    final cachedModifiedTimes = await _dbService.getCachedFileModifiedTimes();
+    final cachedSongs = await _dbService.getAllSongs();
+    final Map<String, Song> cachedMap = {
+      for (final s in cachedSongs) s.filePath: s
+    };
+
+    final List<Song> songsToSave = [];
 
     for (final dirPath in dirsToScan) {
       final dir = Directory(dirPath);
@@ -31,12 +43,26 @@ class LinuxLibraryScanner implements LibraryScanner {
             final ext = p.extension(entity.path).toLowerCase();
             if (_supportedExtensions.contains(ext) && !seenPaths.contains(entity.path)) {
               seenPaths.add(entity.path);
+
               try {
-                final song = await _parseFile(entity, ext);
-                songs.add(song);
+                final stat = await entity.stat();
+                final fileMod = stat.modified.millisecondsSinceEpoch;
+
+                // Incremental optimization: if file hasn't changed, reuse cached record!
+                if (cachedModifiedTimes[entity.path] == fileMod &&
+                    cachedMap.containsKey(entity.path)) {
+                  songs.add(cachedMap[entity.path]!);
+                } else {
+                  // New or modified file: parse metadata and extract cover art
+                  final song = await _parseFile(entity, ext, fileMod);
+                  songs.add(song);
+                  songsToSave.add(song);
+                }
               } catch (_) {
-                // Degrade gracefully on single file parse errors
-                songs.add(_fallbackSong(entity.path));
+                // Degrade gracefully on single file parse error
+                final fallback = _fallbackSong(entity.path);
+                songs.add(fallback);
+                songsToSave.add(fallback);
               }
             }
           }
@@ -45,6 +71,14 @@ class LinuxLibraryScanner implements LibraryScanner {
         // Continue to next directory if access error
       }
     }
+
+    // 2. Persist new/updated songs into SQLite
+    if (songsToSave.isNotEmpty) {
+      await _dbService.saveSongs(songsToSave);
+    }
+
+    // 3. Prune songs from SQLite that were deleted on disk
+    await _dbService.pruneMissingSongs(seenPaths);
 
     // Sort songs alphabetically by title
     songs.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
@@ -56,7 +90,18 @@ class LinuxLibraryScanner implements LibraryScanner {
     if (song.embeddedArt != null) {
       return song.embeddedArt;
     }
-    // Try re-reading art from the file if not cached in memory
+
+    // If artPath exists on disk, read from cached file
+    if (song.artPath != null) {
+      final artFile = File(song.artPath!);
+      if (await artFile.exists()) {
+        try {
+          return await artFile.readAsBytes();
+        } catch (_) {}
+      }
+    }
+
+    // Otherwise extract from MP3 if possible
     try {
       final file = File(song.filePath);
       if (await file.exists() && song.filePath.toLowerCase().endsWith('.mp3')) {
@@ -68,7 +113,10 @@ class LinuxLibraryScanner implements LibraryScanner {
             final apic = tags['APIC'] as Map;
             final base64Str = apic['base64'] as String?;
             if (base64Str != null && base64Str.isNotEmpty) {
-              return base64Decode(base64Str);
+              final artBytes = base64Decode(base64Str);
+              // Save to cache for future fast loads
+              await _dbService.saveArtBytes(song.id, artBytes);
+              return artBytes;
             }
           }
         }
@@ -91,7 +139,7 @@ class LinuxLibraryScanner implements LibraryScanner {
     return list;
   }
 
-  Future<Song> _parseFile(File file, String extension) async {
+  Future<Song> _parseFile(File file, String extension, int fileMod) async {
     final filePath = file.path;
     final id = Song.generateId(filePath);
 
@@ -101,6 +149,7 @@ class LinuxLibraryScanner implements LibraryScanner {
     Duration duration = Duration.zero;
     int? trackNumber;
     Uint8List? artBytes;
+    String? savedArtPath;
 
     if (extension == '.mp3') {
       try {
@@ -128,6 +177,8 @@ class LinuxLibraryScanner implements LibraryScanner {
               final b64 = apic['base64'] as String?;
               if (b64 != null && b64.isNotEmpty) {
                 artBytes = base64Decode(b64);
+                // Cache cover image to disk
+                savedArtPath = await _dbService.saveArtBytes(id, artBytes);
               }
             }
           }
@@ -155,6 +206,8 @@ class LinuxLibraryScanner implements LibraryScanner {
       duration: duration,
       trackNumber: trackNumber,
       embeddedArt: artBytes,
+      artPath: savedArtPath,
+      fileModifiedMs: fileMod,
     );
   }
 
@@ -256,7 +309,6 @@ class LinuxLibraryScanner implements LibraryScanner {
       final header = raf.readSync(44);
       raf.closeSync();
       if (header.length >= 44) {
-        // Byte rate is 4 bytes at offset 28
         final byteRate = header[28] |
             (header[29] << 8) |
             (header[30] << 16) |
