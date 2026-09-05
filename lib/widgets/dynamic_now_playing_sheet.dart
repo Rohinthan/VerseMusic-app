@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/playback/playback_provider.dart';
+import 'album_art_widget.dart';
 
 class DynamicNowPlayingSheet extends ConsumerStatefulWidget {
   const DynamicNowPlayingSheet({super.key});
@@ -95,18 +96,12 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                         ),
                       ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: song.embeddedArt != null
-                          ? Image.memory(
-                              song.embeddedArt!,
-                              fit: BoxFit.cover,
-                            )
-                          : const Icon(
-                              Icons.music_note_rounded,
-                              size: 96,
-                              color: Colors.white24,
-                            ),
+                    child: AlbumArtWidget(
+                      song: song,
+                      size: 340,
+                      borderRadius: 16,
+                      fallbackIcon: Icons.music_note_rounded,
+                      iconSize: 96,
                     ),
                   ),
                 ),
