@@ -6,6 +6,7 @@ class Album {
   final String artist;
   final int songCount;
   final Uint8List? artBytes;
+  final String? artPath;
 
   const Album({
     required this.id,
@@ -13,6 +14,7 @@ class Album {
     required this.artist,
     this.songCount = 0,
     this.artBytes,
+    this.artPath,
   });
 
   @override
