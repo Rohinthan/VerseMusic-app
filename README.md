@@ -20,7 +20,7 @@ A sleek, local-first music player built with Flutter, targeting **Android** and 
 
 - [x] **v0.1 — Skeleton & Platform Scan:** Platform-agnostic `LibraryScanner` interface, Android & Linux scanning backends, data models (`Song`, `Album`, `Artist`), verification UI.
 - [x] **v0.2 — Basic Playback & Dynamic UI:** `just_audio` engine integration, native Linux `libmpv` backend, persistent floating mini-player, animated equalizer, and full-screen Now Playing modal sheet.
-- [ ] **v0.3 — Metadata & Art Extraction:** SQLite local index (`sqflite`/`sqflite_common_ffi`) and album art thumbnails.
+- [x] **v0.3 — Metadata & Art Extraction:** SQLite local index (`sqflite`/`sqflite_common_ffi`), disk-cached cover art extraction, incremental re-scans via modification timestamps, and `AlbumArtWidget`.
 - [ ] **v0.4 — Spotify-like Shell UI:** Bottom navigation, tabs, persistent mini-player, and full-screen Now Playing screen with blurred background.
 - [ ] **v0.5 — Queue & Background Playback:** Up-next queue management, shuffle/repeat, and Android `audio_service` lockscreen/notification controls.
 - [ ] **v0.6 — Lyrics: Parsing & Local Files:** Timed `.lrc` parser, local file matching, synchronized auto-scrolling, and tap-to-seek.
