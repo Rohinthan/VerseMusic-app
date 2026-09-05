@@ -3,7 +3,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:musicapp/core/library/linux_library_scanner.dart';
 import 'package:musicapp/core/library/song_model.dart';
 
+import 'package:musicapp/core/storage/database_service.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+
+class FakePathProviderPlatform extends PathProviderPlatform
+    with MockPlatformInterfaceMixin {
+  @override
+  Future<String?> getApplicationSupportPath() async {
+    final dir = Directory('/tmp/verse_music_test');
+    if (!dir.existsSync()) dir.createSync(recursive: true);
+    return dir.path;
+  }
+}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    PathProviderPlatform.instance = FakePathProviderPlatform();
+    await DatabaseService.initialize();
+  });
   group('Song Model Tests', () {
     test('generateId creates deterministic and consistent hash', () {
       final id1 = Song.generateId('/home/music/track1.mp3');
