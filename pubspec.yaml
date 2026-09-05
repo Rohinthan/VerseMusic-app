@@ -44,6 +44,8 @@ dependencies:
   on_audio_query: ^2.9.0
   id3: ^1.0.2
   crypto: ^3.0.7
+  just_audio: ^0.10.6
+  just_audio_media_kit: ^2.1.0
 
 dev_dependencies:
   flutter_test:
