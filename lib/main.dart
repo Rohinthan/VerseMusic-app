@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'core/library/song_model.dart';
 import 'features/library/library_provider.dart';
 import 'features/playback/playback_provider.dart';
+import 'widgets/album_art_widget.dart';
 import 'widgets/animated_equalizer.dart';
 import 'widgets/dynamic_mini_player.dart';
 
@@ -305,27 +306,14 @@ class MainLibraryScreen extends ConsumerWidget {
                               horizontal: 16,
                               vertical: 4,
                             ),
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: Container(
-                                width: 46,
-                                height: 46,
-                                color: const Color(0xFF282828),
-                                child: song.embeddedArt != null
-                                    ? Image.memory(
-                                        song.embeddedArt!,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Icon(
-                                        isCurrent
-                                            ? Icons.play_arrow_rounded
-                                            : Icons.music_note_rounded,
-                                        color: isCurrent
-                                            ? const Color(0xFF1DB954)
-                                            : Colors.white54,
-                                        size: 24,
-                                      ),
-                              ),
+                            leading: AlbumArtWidget(
+                              song: song,
+                              size: 46,
+                              borderRadius: 6,
+                              fallbackIcon: isCurrent
+                                  ? Icons.play_arrow_rounded
+                                  : Icons.music_note_rounded,
+                              iconSize: 24,
                             ),
                             title: Text(
                               song.title,
@@ -456,27 +444,12 @@ class MainLibraryScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    if (song.embeddedArt != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.memory(
-                          song.embeddedArt!,
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    else
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child:
-                            const Icon(Icons.music_note, color: Colors.white54),
-                      ),
+                    AlbumArtWidget(
+                      song: song,
+                      size: 60,
+                      borderRadius: 8,
+                      iconSize: 28,
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
