@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/dynamic_mini_player.dart';
 import '../library/views/library_view.dart';
@@ -15,8 +16,25 @@ class MainShell extends ConsumerWidget {
     final navState = ref.watch(navigationNotifierProvider);
     final playback = ref.watch(playbackNotifierProvider);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.mediaPlayPause): () {
+          ref.read(playbackNotifierProvider.notifier).togglePlayPause();
+        },
+        const SingleActivator(LogicalKeyboardKey.mediaTrackNext): () {
+          ref.read(playbackNotifierProvider.notifier).playNext();
+        },
+        const SingleActivator(LogicalKeyboardKey.mediaTrackPrevious): () {
+          ref.read(playbackNotifierProvider.notifier).playPrevious();
+        },
+        const SingleActivator(LogicalKeyboardKey.mediaStop): () {
+          ref.read(playbackNotifierProvider.notifier).togglePlayPause();
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          backgroundColor: const Color(0xFF121212),
       body: IndexedStack(
         index: navState.currentTab.index,
         children: const [
@@ -85,6 +103,8 @@ class MainShell extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
