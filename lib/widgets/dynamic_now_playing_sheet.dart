@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/audio/playback_state.dart';
 import '../features/playback/playback_provider.dart';
 import 'album_art_widget.dart';
 import 'blurred_art_background.dart';
+import 'queue_sheet.dart';
 
 class DynamicNowPlayingSheet extends ConsumerStatefulWidget {
   const DynamicNowPlayingSheet({super.key});
@@ -202,23 +204,24 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                 ],
               ),
 
-              // Transport Controls Row
+              // Transport Controls Row (Spotify Style: Shuffle, Previous, Play/Pause, Next, Repeat)
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Shuffle Button
                   IconButton(
-                    iconSize: 32,
-                    icon: const Icon(Icons.replay_10_rounded),
-                    color: Colors.white70,
-                    tooltip: 'Rewind 10s',
-                    onPressed: () {
-                      final target = (playback.position - const Duration(seconds: 10));
-                      ref.read(playbackNotifierProvider.notifier).seek(
-                            target.isNegative ? Duration.zero : target,
-                          );
-                    },
+                    iconSize: 26,
+                    icon: const Icon(Icons.shuffle_rounded),
+                    color: playback.isShuffled
+                        ? const Color(0xFF1DB954)
+                        : Colors.white60,
+                    tooltip: playback.isShuffled ? 'Shuffle: On' : 'Shuffle: Off',
+                    onPressed: () => ref
+                        .read(playbackNotifierProvider.notifier)
+                        .toggleShuffle(),
                   ),
-                  const SizedBox(width: 8),
+
+                  // Previous Track
                   IconButton(
                     iconSize: 42,
                     icon: const Icon(Icons.skip_previous_rounded),
@@ -227,7 +230,6 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                     onPressed: () =>
                         ref.read(playbackNotifierProvider.notifier).playPrevious(),
                   ),
-                  const SizedBox(width: 16),
 
                   // Large Circular Play/Pause button with Spotify Green glow
                   GestureDetector(
@@ -270,7 +272,7 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                     ),
                   ),
 
-                  const SizedBox(width: 16),
+                  // Next Track
                   IconButton(
                     iconSize: 42,
                     icon: const Icon(Icons.skip_next_rounded),
@@ -279,18 +281,26 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                     onPressed: () =>
                         ref.read(playbackNotifierProvider.notifier).playNext(),
                   ),
-                  const SizedBox(width: 8),
+
+                  // Repeat Mode Button (Off / All / One)
                   IconButton(
-                    iconSize: 32,
-                    icon: const Icon(Icons.forward_10_rounded),
-                    color: Colors.white70,
-                    tooltip: 'Forward 10s',
-                    onPressed: () {
-                      final target = (playback.position + const Duration(seconds: 10));
-                      ref.read(playbackNotifierProvider.notifier).seek(
-                            target > playback.duration ? playback.duration : target,
-                          );
-                    },
+                    iconSize: 26,
+                    icon: Icon(
+                      playback.repeatMode == AudioRepeatMode.one
+                          ? Icons.repeat_one_rounded
+                          : Icons.repeat_rounded,
+                    ),
+                    color: playback.repeatMode != AudioRepeatMode.off
+                        ? const Color(0xFF1DB954)
+                        : Colors.white60,
+                    tooltip: playback.repeatMode == AudioRepeatMode.one
+                        ? 'Repeat: One'
+                        : (playback.repeatMode == AudioRepeatMode.all
+                            ? 'Repeat: All'
+                            : 'Repeat: Off'),
+                    onPressed: () => ref
+                        .read(playbackNotifierProvider.notifier)
+                        .cycleRepeatMode(),
                   ),
                 ],
               ),
@@ -332,7 +342,7 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                 ],
               ),
 
-              // Bottom Utilities Bar (Lyrics & Queue affordance)
+              // Bottom Utilities Bar (Lyrics & Queue Sheet)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Row(
@@ -353,14 +363,16 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                     ),
                     IconButton(
                       icon: const Icon(Icons.queue_music_rounded),
-                      color: Colors.white60,
-                      tooltip: 'Queue (Coming in v0.5)',
+                      color: playback.upcomingSongs.isNotEmpty
+                          ? const Color(0xFF1DB954)
+                          : Colors.white70,
+                      tooltip: 'Up Next Queue',
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Queue management coming in v0.5'),
-                            duration: Duration(seconds: 1),
-                          ),
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => const QueueSheet(),
                         );
                       },
                     ),
