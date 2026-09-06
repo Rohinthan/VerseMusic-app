@@ -9,6 +9,12 @@ enum PlayerStatus {
   error,
 }
 
+enum AudioRepeatMode {
+  off,
+  all,
+  one,
+}
+
 class PlaybackState {
   final Song? currentSong;
   final int currentIndex;
@@ -19,6 +25,9 @@ class PlaybackState {
   final double volume;
   final String? errorMessage;
   final List<Song> playlist;
+  final List<Song> originalPlaylist;
+  final bool isShuffled;
+  final AudioRepeatMode repeatMode;
 
   const PlaybackState({
     this.currentSong,
@@ -30,6 +39,9 @@ class PlaybackState {
     this.volume = 1.0,
     this.errorMessage,
     this.playlist = const [],
+    this.originalPlaylist = const [],
+    this.isShuffled = false,
+    this.repeatMode = AudioRepeatMode.off,
   });
 
   bool get isPlaying => status == PlayerStatus.playing;
@@ -37,6 +49,13 @@ class PlaybackState {
   bool get hasCurrentSong => currentSong != null;
   bool get hasNext => currentIndex >= 0 && currentIndex < playlist.length - 1;
   bool get hasPrevious => currentIndex > 0;
+
+  List<Song> get upcomingSongs {
+    if (currentIndex < 0 || currentIndex >= playlist.length - 1) {
+      return const [];
+    }
+    return playlist.sublist(currentIndex + 1);
+  }
 
   double get progress {
     if (duration.inMilliseconds <= 0) return 0.0;
@@ -54,6 +73,9 @@ class PlaybackState {
     double? volume,
     String? errorMessage,
     List<Song>? playlist,
+    List<Song>? originalPlaylist,
+    bool? isShuffled,
+    AudioRepeatMode? repeatMode,
     bool clearSong = false,
   }) {
     return PlaybackState(
@@ -66,6 +88,9 @@ class PlaybackState {
       volume: volume ?? this.volume,
       errorMessage: errorMessage,
       playlist: playlist ?? this.playlist,
+      originalPlaylist: originalPlaylist ?? this.originalPlaylist,
+      isShuffled: isShuffled ?? this.isShuffled,
+      repeatMode: repeatMode ?? this.repeatMode,
     );
   }
 }
