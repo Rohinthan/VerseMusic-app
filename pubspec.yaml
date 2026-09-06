@@ -46,6 +46,7 @@ dependencies:
   crypto: ^3.0.7
   just_audio: ^0.10.6
   just_audio_media_kit: ^2.1.0
+  audio_service: ^0.18.19
 
 dev_dependencies:
   flutter_test:
