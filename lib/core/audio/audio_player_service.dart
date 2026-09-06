@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 import '../library/song_model.dart';
+import 'verse_audio_handler.dart';
 
 class AudioPlayerService {
   final AudioPlayer _player = AudioPlayer();
+  VerseAudioHandler? _audioHandler;
 
   AudioPlayer get player => _player;
+  VerseAudioHandler? get audioHandler => _audioHandler;
 
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
   Stream<Duration> get positionStream => _player.positionStream;
@@ -17,6 +21,36 @@ class AudioPlayerService {
   Duration get currentPosition => _player.position;
   Duration? get currentDuration => _player.duration;
   bool get isPlaying => _player.playing;
+
+  Future<void> initializeBackgroundService({
+    void Function()? onNext,
+    void Function()? onPrevious,
+    void Function(int)? onRepeatMode,
+    void Function(bool)? onShuffleMode,
+  }) async {
+    if (Platform.isAndroid) {
+      try {
+        final handler = VerseAudioHandler(_player)
+          ..onSkipToNext = onNext
+          ..onSkipToPrevious = onPrevious
+          ..onSetRepeatMode = onRepeatMode
+          ..onSetShuffleMode = onShuffleMode;
+
+        _audioHandler = await AudioService.init(
+          builder: () => handler,
+          config: const AudioServiceConfig(
+            androidNotificationChannelId: 'com.rohinthan.musicapp.playback',
+            androidNotificationChannelName: 'Verse Music Playback',
+            androidNotificationOngoing: true,
+            androidStopForegroundOnPause: true,
+            androidNotificationIcon: 'mipmap/ic_launcher',
+          ),
+        );
+      } catch (_) {
+        // Safe fallback in test or headless environments
+      }
+    }
+  }
 
   Future<Duration?> playSong(Song song) async {
     try {
@@ -30,6 +64,9 @@ class AudioPlayerService {
 
       // Load file into player
       final duration = await _player.setFilePath(song.filePath);
+
+      // Update background notification
+      _audioHandler?.updateCurrentSong(song);
 
       // Begin playback
       await _player.play();
@@ -49,6 +86,7 @@ class AudioPlayerService {
 
   Future<void> stop() async {
     await _player.stop();
+    _audioHandler?.updateCurrentSong(null);
   }
 
   Future<void> seek(Duration position) async {
