@@ -10,6 +10,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Verse'), findsOneWidget);
+    expect(find.text('Verse Library'), findsOneWidget);
+    expect(find.text('Search'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
   });
 }
