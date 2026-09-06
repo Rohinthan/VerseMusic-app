@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/playback/playback_provider.dart';
 import 'album_art_widget.dart';
+import 'blurred_art_background.dart';
 
 class DynamicNowPlayingSheet extends ConsumerStatefulWidget {
   const DynamicNowPlayingSheet({super.key});
@@ -33,8 +34,10 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
     final currentSeconds = _dragPositionSeconds ??
         playback.position.inSeconds.toDouble().clamp(0.0, totalSeconds > 0 ? totalSeconds : 1.0);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+    return BlurredArtBackground(
+      song: song,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -328,10 +331,47 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                   ),
                 ],
               ),
+
+              // Bottom Utilities Bar (Lyrics & Queue affordance)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.lyrics_outlined),
+                      color: Colors.white60,
+                      tooltip: 'Lyrics (Coming in v0.6)',
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Lyrics sync engine coming in v0.6'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.queue_music_rounded),
+                      color: Colors.white60,
+                      tooltip: 'Queue (Coming in v0.5)',
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Queue management coming in v0.5'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
