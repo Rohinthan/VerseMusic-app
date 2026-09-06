@@ -236,7 +236,7 @@ class SongsTabView extends ConsumerWidget {
                         size: 18,
                         color: Colors.white54,
                       ),
-                      onPressed: () => _showSongDetails(context, song),
+                      onPressed: () => _showSongDetails(context, ref, song),
                     ),
                   ],
                 ),
@@ -260,7 +260,7 @@ class SongsTabView extends ConsumerWidget {
     );
   }
 
-  void _showSongDetails(BuildContext context, Song song) {
+  void _showSongDetails(BuildContext context, WidgetRef ref, Song song) {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF242424),
@@ -317,6 +317,37 @@ class SongsTabView extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
+                const Divider(color: Colors.white12),
+                ListTile(
+                  leading: const Icon(Icons.playlist_play_rounded, color: Color(0xFF1DB954)),
+                  title: const Text('Play Next', style: TextStyle(color: Colors.white, fontSize: 14)),
+                  subtitle: const Text('Insert this track to play next', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  onTap: () {
+                    ref.read(playbackNotifierProvider.notifier).playNextInQueue(song);
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Playing "${song.title}" next'),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.queue_music_rounded, color: Color(0xFF1DB954)),
+                  title: const Text('Add to Queue', style: TextStyle(color: Colors.white, fontSize: 14)),
+                  subtitle: const Text('Append this track to end of queue', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  onTap: () {
+                    ref.read(playbackNotifierProvider.notifier).addToQueue(song);
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Added "${song.title}" to queue'),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                ),
                 const Divider(color: Colors.white12),
                 const SizedBox(height: 8),
                 Text(
