@@ -17,16 +17,19 @@ class QueueSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final playback = ref.watch(playbackNotifierProvider);
-    final upcoming = playback.upcomingSongs;
+    final upcoming = ref.watch(playbackNotifierProvider.select((s) => s.upcomingSongs));
+    final currentSong = ref.watch(playbackNotifierProvider.select((s) => s.currentSong));
+    final isPlaying = ref.watch(playbackNotifierProvider.select((s) => s.isPlaying));
+    final isShuffled = ref.watch(playbackNotifierProvider.select((s) => s.isShuffled));
+    final repeatMode = ref.watch(playbackNotifierProvider.select((s) => s.repeatMode));
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Color(0xFF181818),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
+    return Material(
+      color: const Color(0xFF181818),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.85,
+        child: Column(
         children: [
           // Top drag indicator bar
           Container(
@@ -90,90 +93,20 @@ class QueueSheet extends ConsumerWidget {
 
           const Divider(height: 1, color: Colors.white12),
 
-          // Body
+          // Body: Fully virtualized list with O(1) item extent
           Expanded(
-            child: ListView(
+            child: ReorderableListView.builder(
               padding: const EdgeInsets.only(bottom: 24),
-              children: [
-                // NOW PLAYING Section
-                if (playback.hasCurrentSong) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                    child: Text(
-                      'NOW PLAYING',
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white.withAlpha(160),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF242424),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: const Color(0xFF1DB954).withAlpha(40),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        AlbumArtWidget(
-                          song: playback.currentSong!,
-                          size: 48,
-                          borderRadius: 6,
-                          fallbackIcon: Icons.music_note_rounded,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                playback.currentSong!.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Color(0xFF1DB954),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${playback.currentSong!.artist} • ${playback.currentSong!.album}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Colors.white.withAlpha(160),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (playback.isPlaying) ...[
-                          const SizedBox(width: 8),
-                          const AnimatedEqualizer(isPlaying: true, size: 16),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // NEXT UP Section
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'NEXT UP (${upcoming.length})',
+              itemExtent: 64.0,
+              header: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // NOW PLAYING Section
+                  if (currentSong != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                      child: Text(
+                        'NOW PLAYING',
                         style: TextStyle(
                           fontSize: 11,
                           letterSpacing: 1.2,
@@ -181,143 +114,215 @@ class QueueSheet extends ConsumerWidget {
                           color: Colors.white.withAlpha(160),
                         ),
                       ),
-                      if (upcoming.isNotEmpty)
-                        Text(
-                          'Drag to reorder',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.white.withAlpha(100),
-                          ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF242424),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xFF1DB954).withAlpha(40),
+                          width: 1,
                         ),
-                    ],
-                  ),
-                ),
-
-                if (upcoming.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                      ),
+                      child: Row(
                         children: [
-                          Icon(
-                            Icons.queue_music_rounded,
-                            size: 56,
-                            color: Colors.white.withAlpha(60),
+                          AlbumArtWidget(
+                            song: currentSong,
+                            size: 48,
+                            borderRadius: 6,
+                            fallbackIcon: Icons.music_note_rounded,
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Queue is empty',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  currentSong.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF1DB954),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${currentSong.artist} • ${currentSong.album}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.white.withAlpha(160),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Tracks you play or add will appear here.',
-                            style: TextStyle(
-                              color: Colors.white.withAlpha(140),
-                              fontSize: 12,
-                            ),
-                          ),
+                          if (isPlaying) ...[
+                            const SizedBox(width: 8),
+                            const AnimatedEqualizer(isPlaying: true, size: 16),
+                          ],
                         ],
                       ),
                     ),
-                  )
-                else
-                  ReorderableListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: upcoming.length,
-                    onReorderItem: (oldIndex, newIndex) {
-                      ref
-                          .read(playbackNotifierProvider.notifier)
-                          .reorderQueue(oldIndex, newIndex);
-                    },
-                    itemBuilder: (context, index) {
-                      final song = upcoming[index];
+                    const SizedBox(height: 16),
+                  ],
 
-                      return ListTile(
-                        key: ValueKey('queue_item_${song.id}_$index'),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                        leading: Row(
+                  // NEXT UP Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'NEXT UP (${upcoming.length})',
+                          style: TextStyle(
+                            fontSize: 11,
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white.withAlpha(160),
+                          ),
+                        ),
+                        if (upcoming.isNotEmpty)
+                          Text(
+                            'Drag to reorder',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withAlpha(100),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  if (upcoming.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                      child: Center(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            ReorderableDragStartListener(
-                              index: index,
-                              child: const Padding(
-                                padding: EdgeInsets.only(right: 8.0),
-                                child: Icon(
-                                  Icons.drag_handle_rounded,
-                                  color: Colors.white38,
-                                  size: 20,
-                                ),
+                            Icon(
+                              Icons.queue_music_rounded,
+                              size: 56,
+                              color: Colors.white.withAlpha(60),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Queue is empty',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            AlbumArtWidget(
-                              song: song,
-                              size: 40,
-                              borderRadius: 4,
-                            ),
-                          ],
-                        ),
-                        title: Text(
-                          song.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        subtitle: Text(
-                          song.artist,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white.withAlpha(140),
-                            fontSize: 11,
-                          ),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
+                            const SizedBox(height: 4),
                             Text(
-                              _formatDuration(song.duration),
+                              'Tracks you play or add will appear here.',
                               style: TextStyle(
                                 color: Colors.white.withAlpha(140),
-                                fontSize: 11,
-                                fontFeatures: const [FontFeature.tabularFigures()],
+                                fontSize: 12,
                               ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.remove_circle_outline_rounded,
-                                size: 18,
-                                color: Colors.white38,
-                              ),
-                              onPressed: () {
-                                ref
-                                    .read(playbackNotifierProvider.notifier)
-                                    .removeFromQueue(index);
-                              },
                             ),
                           ],
                         ),
-                        onTap: () {
+                      ),
+                    ),
+                ],
+              ),
+              itemCount: upcoming.length,
+              onReorderItem: (oldIndex, newIndex) {
+                ref
+                    .read(playbackNotifierProvider.notifier)
+                    .reorderQueue(oldIndex, newIndex);
+              },
+              itemBuilder: (context, index) {
+                final song = upcoming[index];
+
+                return Material(
+                  key: ValueKey('queue_item_${song.id}_$index'),
+                  color: Colors.transparent,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ReorderableDragStartListener(
+                        index: index,
+                        child: const Padding(
+                          padding: EdgeInsets.only(right: 8.0),
+                          child: Icon(
+                            Icons.drag_handle_rounded,
+                            color: Colors.white38,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      AlbumArtWidget(
+                        song: song,
+                        size: 40,
+                        borderRadius: 4,
+                      ),
+                    ],
+                  ),
+                  title: Text(
+                    song.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    song.artist,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withAlpha(140),
+                      fontSize: 11,
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _formatDuration(song.duration),
+                        style: TextStyle(
+                          color: Colors.white.withAlpha(140),
+                          fontSize: 11,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.remove_circle_outline_rounded,
+                          size: 18,
+                          color: Colors.white38,
+                        ),
+                        onPressed: () {
                           ref
                               .read(playbackNotifierProvider.notifier)
-                              .jumpToQueueItem(index);
+                              .removeFromQueue(index);
                         },
-                      );
-                    },
+                      ),
+                    ],
                   ),
-              ],
-            ),
+                  onTap: () {
+                    ref
+                        .read(playbackNotifierProvider.notifier)
+                        .jumpToQueueItem(index);
+                  },
+                ),
+              );
+            },
           ),
+        ),
 
           // Bottom Quick Bar: Shuffle & Repeat
           Container(
@@ -332,19 +337,19 @@ class QueueSheet extends ConsumerWidget {
                 // Shuffle Button
                 TextButton.icon(
                   style: TextButton.styleFrom(
-                    foregroundColor: playback.isShuffled
+                    foregroundColor: isShuffled
                         ? const Color(0xFF1DB954)
                         : Colors.white60,
                   ),
                   icon: Icon(
                     Icons.shuffle_rounded,
-                    color: playback.isShuffled
+                    color: isShuffled
                         ? const Color(0xFF1DB954)
                         : Colors.white60,
                     size: 20,
                   ),
                   label: Text(
-                    playback.isShuffled ? 'Shuffle On' : 'Shuffle Off',
+                    isShuffled ? 'Shuffle On' : 'Shuffle Off',
                     style: const TextStyle(fontSize: 12),
                   ),
                   onPressed: () {
@@ -355,23 +360,23 @@ class QueueSheet extends ConsumerWidget {
                 // Repeat Button
                 TextButton.icon(
                   style: TextButton.styleFrom(
-                    foregroundColor: playback.repeatMode != AudioRepeatMode.off
+                    foregroundColor: repeatMode != AudioRepeatMode.off
                         ? const Color(0xFF1DB954)
                         : Colors.white60,
                   ),
                   icon: Icon(
-                    playback.repeatMode == AudioRepeatMode.one
+                    repeatMode == AudioRepeatMode.one
                         ? Icons.repeat_one_rounded
                         : Icons.repeat_rounded,
-                    color: playback.repeatMode != AudioRepeatMode.off
+                    color: repeatMode != AudioRepeatMode.off
                         ? const Color(0xFF1DB954)
                         : Colors.white60,
                     size: 20,
                   ),
                   label: Text(
-                    playback.repeatMode == AudioRepeatMode.one
+                    repeatMode == AudioRepeatMode.one
                         ? 'Repeat One'
-                        : (playback.repeatMode == AudioRepeatMode.all
+                        : (repeatMode == AudioRepeatMode.all
                             ? 'Repeat All'
                             : 'Repeat Off'),
                     style: const TextStyle(fontSize: 12),
@@ -385,6 +390,7 @@ class QueueSheet extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
