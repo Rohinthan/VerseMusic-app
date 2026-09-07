@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'core/audio/linux_locale.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/shell/main_shell.dart';
 
 void main() {
@@ -42,20 +43,22 @@ void main() {
   );
 }
 
-class VerseMusicApp extends StatelessWidget {
+class VerseMusicApp extends ConsumerWidget {
   const VerseMusicApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accentColor = ref.watch(accentColorProvider);
+
     return MaterialApp(
       title: 'Verse Music Player',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(useMaterial3: true).copyWith(
         scaffoldBackgroundColor: const Color(0xFF121212),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF1DB954), // Spotify Green
-          secondary: Color(0xFF1ED760),
-          surface: Color(0xFF181818),
+        colorScheme: ColorScheme.dark(
+          primary: accentColor,
+          secondary: accentColor.withAlpha(200),
+          surface: const Color(0xFF181818),
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF121212),
