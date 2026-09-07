@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../widgets/dynamic_mini_player.dart';
 import '../library/views/library_view.dart';
 import '../navigation/navigation_provider.dart';
@@ -15,6 +16,7 @@ class MainShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final navState = ref.watch(navigationNotifierProvider);
     final playback = ref.watch(playbackNotifierProvider);
+    final accentColor = ref.watch(accentColorProvider);
 
     return CallbackShortcuts(
       bindings: {
@@ -69,7 +71,7 @@ class MainShell extends ConsumerWidget {
                       .setTab(AppTab.values[index]);
                 },
                 backgroundColor: const Color(0xFF121212),
-                selectedItemColor: const Color(0xFF1DB954),
+                selectedItemColor: accentColor,
                 unselectedItemColor: Colors.white60,
                 selectedLabelStyle: const TextStyle(
                   fontWeight: FontWeight.bold,
