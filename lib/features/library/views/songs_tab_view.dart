@@ -20,7 +20,9 @@ class SongsTabView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final libraryState = ref.watch(libraryNotifierProvider);
-    final playback = ref.watch(playbackNotifierProvider);
+    final currentSongId = ref.watch(playbackNotifierProvider.select((s) => s.currentSong?.id));
+    final isPlaying = ref.watch(playbackNotifierProvider.select((s) => s.isPlaying));
+    final hasCurrentSong = ref.watch(playbackNotifierProvider.select((s) => s.hasCurrentSong));
 
     if (libraryState.isLoading && libraryState.songs.isEmpty) {
       return const Center(
@@ -110,22 +112,22 @@ class SongsTabView extends ConsumerWidget {
                   ),
                 ],
               ),
-              if (playback.hasCurrentSong)
+              if (hasCurrentSong)
                 Row(
                   children: [
                     Text(
-                      playback.isPlaying ? 'PLAYING' : 'PAUSED',
+                      isPlaying ? 'PLAYING' : 'PAUSED',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: playback.isPlaying
+                        color: isPlaying
                             ? const Color(0xFF1DB954)
                             : Colors.white54,
                       ),
                     ),
                     const SizedBox(width: 6),
                     AnimatedEqualizer(
-                      isPlaying: playback.isPlaying,
+                      isPlaying: isPlaying,
                       size: 14,
                     ),
                   ],
@@ -138,7 +140,7 @@ class SongsTabView extends ConsumerWidget {
         Expanded(
           child: ListView.separated(
             padding: EdgeInsets.only(
-              bottom: playback.hasCurrentSong ? 88 : 16,
+              bottom: hasCurrentSong ? 88 : 16,
               top: 4,
             ),
             itemCount: libraryState.songs.length,
@@ -148,8 +150,8 @@ class SongsTabView extends ConsumerWidget {
             ),
             itemBuilder: (context, index) {
               final song = libraryState.songs[index];
-              final isCurrent = playback.currentSong?.id == song.id;
-              final isPlayingThis = isCurrent && playback.isPlaying;
+              final isCurrent = currentSongId == song.id;
+              final isPlayingThis = isCurrent && isPlaying;
               final ext = p
                   .extension(song.filePath)
                   .toUpperCase()
