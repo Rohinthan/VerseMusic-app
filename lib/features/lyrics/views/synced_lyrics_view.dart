@@ -93,6 +93,67 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
       );
     }
 
+    if (lyricsState.isInstrumental) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF1DB954).withAlpha(25),
+                  border: Border.all(color: const Color(0xFF1DB954).withAlpha(60)),
+                ),
+                child: const Icon(
+                  Icons.music_note_rounded,
+                  size: 36,
+                  color: Color(0xFF1DB954),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Instrumental Track',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'This track contains no lyrics.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withAlpha(140),
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              OutlinedButton.icon(
+                onPressed: () {
+                  ref.read(lyricsNotifierProvider.notifier).refresh();
+                },
+                icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white70),
+                label: const Text(
+                  'Search Again',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white.withAlpha(50)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (!lyricsState.hasLyrics) {
       return Center(
         child: Padding(
@@ -116,12 +177,27 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Place a .lrc file beside your audio track to view live synced lyrics.',
+                'Could not find lyrics locally or on LRCLIB.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withAlpha(140),
                   fontSize: 13,
                   height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              OutlinedButton.icon(
+                onPressed: () {
+                  ref.read(lyricsNotifierProvider.notifier).refresh();
+                },
+                icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white70),
+                label: const Text(
+                  'Search Online Again',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white.withAlpha(50)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
               ),
             ],
@@ -131,18 +207,22 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
     }
 
     final lines = lyricsState.lyrics.lines;
+    final isSynced = lyricsState.isSynced;
 
-    // Ensure we have a GlobalKey for each line
-    while (_lineKeys.length < lines.length) {
-      _lineKeys.add(GlobalKey());
-    }
-    if (_lineKeys.length > lines.length) {
-      _lineKeys.removeRange(lines.length, _lineKeys.length);
+    // Ensure we have a GlobalKey for each line (used for synced scrolling)
+    if (isSynced) {
+      while (_lineKeys.length < lines.length) {
+        _lineKeys.add(GlobalKey());
+      }
+      if (_lineKeys.length > lines.length) {
+        _lineKeys.removeRange(lines.length, _lineKeys.length);
+      }
     }
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        if (notification is ScrollStartNotification &&
+        if (isSynced &&
+            notification is ScrollStartNotification &&
             notification.dragDetails != null) {
           _onUserScrollStart();
         }
@@ -154,37 +234,89 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
             controller: _scrollController,
             padding: EdgeInsets.symmetric(
               horizontal: 24,
-              vertical: MediaQuery.of(context).size.height * 0.25,
+              vertical: isSynced ? MediaQuery.of(context).size.height * 0.25 : 32,
             ),
-            itemCount: lines.length,
+            // Total items: lyric lines + 1 footer attribution item
+            itemCount: lines.length + 1,
             itemBuilder: (context, index) {
+              // Footer item: Source attribution & refresh
+              if (index == lines.length) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 40, bottom: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        lyricsState.lyricsFilePath != null || lyricsState.sourceLabel.contains('Local')
+                            ? Icons.folder_outlined
+                            : Icons.cloud_done_outlined,
+                        size: 14,
+                        color: Colors.white.withAlpha(100),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        lyricsState.sourceLabel,
+                        style: TextStyle(
+                          color: Colors.white.withAlpha(110),
+                          fontSize: 12,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          ref.read(lyricsNotifierProvider.notifier).refresh();
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            Icons.refresh_rounded,
+                            size: 14,
+                            color: Colors.white.withAlpha(120),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
               final line = lines[index];
-              final isActive = index == lyricsState.activeLineIndex;
-              final isPast = index < lyricsState.activeLineIndex;
+              final isActive = isSynced && index == lyricsState.activeLineIndex;
+              final isPast = isSynced && index < lyricsState.activeLineIndex;
 
               return Padding(
-                key: _lineKeys[index],
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                key: isSynced ? _lineKeys[index] : null,
+                padding: EdgeInsets.symmetric(vertical: isSynced ? 10 : 8),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () {
-                    ref.read(lyricsNotifierProvider.notifier).seekToLine(index);
-                  },
+                  onTap: isSynced
+                      ? () {
+                          ref.read(lyricsNotifierProvider.notifier).seekToLine(index);
+                        }
+                      : null,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutCubic,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    alignment: Alignment.centerLeft,
+                    alignment: isSynced ? Alignment.centerLeft : Alignment.center,
                     child: Text(
                       line.text.isEmpty ? '♪' : line.text,
+                      textAlign: isSynced ? TextAlign.left : TextAlign.center,
                       style: TextStyle(
-                        fontSize: isActive ? 22 : 17,
+                        fontSize: isSynced
+                            ? (isActive ? 22 : 17)
+                            : 16,
+                        height: 1.5,
                         fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                        color: isActive
-                            ? const Color(0xFF1DB954)
-                            : isPast
-                                ? Colors.white.withAlpha(90)
-                                : Colors.white.withAlpha(160),
+                        color: !isSynced
+                            ? Colors.white.withAlpha(210)
+                            : (isActive
+                                ? const Color(0xFF1DB954)
+                                : isPast
+                                    ? Colors.white.withAlpha(90)
+                                    : Colors.white.withAlpha(160)),
                         shadows: isActive
                             ? [
                                 BoxShadow(
@@ -202,7 +334,7 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
           ),
 
           // Floating "Sync" Pill when user has manually scrolled away
-          if (_isUserScrolling && lyricsState.activeLineIndex >= 0)
+          if (isSynced && _isUserScrolling && lyricsState.activeLineIndex >= 0)
             Positioned(
               bottom: 16,
               left: 0,
