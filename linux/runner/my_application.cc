@@ -1,5 +1,6 @@
 #include "my_application.h"
 
+#include <clocale>
 #include <flutter_linux/flutter_linux.h>
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
@@ -21,6 +22,10 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
 
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
+  // Required by libmpv (used in media_kit / just_audio_media_kit).
+  // GTK initializes locale to system default, which breaks libmpv.
+  setlocale(LC_NUMERIC, "C");
+
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
@@ -106,6 +111,7 @@ static void my_application_startup(GApplication* application) {
   // Perform any actions required at application startup.
 
   G_APPLICATION_CLASS(my_application_parent_class)->startup(application);
+  setlocale(LC_NUMERIC, "C");
 }
 
 // Implements GApplication::shutdown.
