@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/audio/playback_state.dart';
+import '../features/lyrics/views/synced_lyrics_view.dart';
 import '../features/playback/playback_provider.dart';
 import 'album_art_widget.dart';
 import 'blurred_art_background.dart';
@@ -16,6 +17,7 @@ class DynamicNowPlayingSheet extends ConsumerStatefulWidget {
 
 class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet> {
   double? _dragPositionSeconds;
+  bool _showLyrics = false;
 
   String _formatTime(Duration duration) {
     final mins = duration.inMinutes;
@@ -73,42 +75,58 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Large Album Art with Shadow
-              Center(
-                child: Hero(
-                  tag: 'now_playing_art_${song.id}',
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.75,
-                    height: MediaQuery.of(context).size.width * 0.75,
-                    constraints: const BoxConstraints(
-                      maxWidth: 340,
-                      maxHeight: 340,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF242424),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF1DB954).withAlpha(35),
-                          blurRadius: 36,
-                          spreadRadius: 4,
-                          offset: const Offset(0, 12),
+              // Central Display: Album Art or Synced Lyrics
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.42,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 350),
+                  child: _showLyrics
+                      ? const SyncedLyricsView(key: ValueKey('synced_lyrics'))
+                      : Center(
+                          key: const ValueKey('album_art_center'),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _showLyrics = true;
+                              });
+                            },
+                            child: Hero(
+                              tag: 'now_playing_art_${song.id}',
+                              child: Container(
+                                width: MediaQuery.of(context).size.width * 0.75,
+                                height: MediaQuery.of(context).size.width * 0.75,
+                                constraints: const BoxConstraints(
+                                  maxWidth: 340,
+                                  maxHeight: 340,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF242424),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF1DB954).withAlpha(35),
+                                      blurRadius: 36,
+                                      spreadRadius: 4,
+                                      offset: const Offset(0, 12),
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(150),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: AlbumArtWidget(
+                                  song: song,
+                                  size: 340,
+                                  borderRadius: 16,
+                                  fallbackIcon: Icons.music_note_rounded,
+                                  iconSize: 96,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                        BoxShadow(
-                          color: Colors.black.withAlpha(150),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: AlbumArtWidget(
-                      song: song,
-                      size: 340,
-                      borderRadius: 16,
-                      fallbackIcon: Icons.music_note_rounded,
-                      iconSize: 96,
-                    ),
-                  ),
                 ),
               ),
 
@@ -349,16 +367,19 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.lyrics_outlined),
-                      color: Colors.white60,
-                      tooltip: 'Lyrics (Coming in v0.6)',
+                      icon: Icon(
+                        _showLyrics
+                            ? Icons.lyrics_rounded
+                            : Icons.lyrics_outlined,
+                      ),
+                      color: _showLyrics
+                          ? const Color(0xFF1DB954)
+                          : Colors.white70,
+                      tooltip: _showLyrics ? 'Show Artwork' : 'Live Synced Lyrics',
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Lyrics sync engine coming in v0.6'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
+                        setState(() {
+                          _showLyrics = !_showLyrics;
+                        });
                       },
                     ),
                     IconButton(
