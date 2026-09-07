@@ -20,38 +20,42 @@ class AlbumArtWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pixelRatio = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
+    final cachePx = (size * pixelRatio).clamp(32.0, 512.0).round();
+
     Widget? imageContent;
 
-    if (song.artPath != null) {
-      final file = File(song.artPath!);
-      if (file.existsSync()) {
-        imageContent = Image.file(
-          file,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => _fallback(),
-        );
-      }
-    }
-
-    if (imageContent == null && song.embeddedArt != null) {
+    if (song.artPath != null && song.artPath!.isNotEmpty) {
+      imageContent = Image.file(
+        File(song.artPath!),
+        width: size,
+        height: size,
+        cacheWidth: cachePx,
+        cacheHeight: cachePx,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _fallback(),
+      );
+    } else if (song.embeddedArt != null && song.embeddedArt!.isNotEmpty) {
       imageContent = Image.memory(
         song.embeddedArt!,
         width: size,
         height: size,
+        cacheWidth: cachePx,
+        cacheHeight: cachePx,
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => _fallback(),
       );
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: Container(
-        width: size,
-        height: size,
-        color: const Color(0xFF242424),
-        child: imageContent ?? _fallback(),
+    return RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Container(
+          width: size,
+          height: size,
+          color: const Color(0xFF242424),
+          child: imageContent ?? _fallback(),
+        ),
       ),
     );
   }
