@@ -1,11 +1,28 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
+import 'core/audio/linux_locale.dart';
 import 'features/shell/main_shell.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Ensure LC_NUMERIC is "C" on Linux before libmpv/media_kit initializes
+  ensureLinuxAudioLocale();
+
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('CAUGHT_FLUTTER_ERROR: ${details.exceptionAsString()}');
+    debugPrint('CAUGHT_FLUTTER_STACK: ${details.stack}');
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('CAUGHT_PLATFORM_ERROR: $error');
+    debugPrint('CAUGHT_PLATFORM_STACK: $stack');
+    return true; // prevent process exit
+  };
 
   // Initialize Linux desktop audio backend via libmpv
   if (Platform.isLinux) {
