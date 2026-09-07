@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/library/album_model.dart';
 import '../../core/library/artist_model.dart';
 import '../../core/library/library_scanner.dart';
@@ -42,11 +43,20 @@ class LibraryState {
 }
 
 class LibraryNotifier extends Notifier<LibraryState> {
+  static const String _prefDirectoriesKey = 'custom_music_directories';
   final DatabaseService _dbService = DatabaseService();
 
   @override
   LibraryState build() {
-    Future.microtask(() => scan());
+    Future.microtask(() async {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final saved = prefs.getStringList(_prefDirectoriesKey);
+        await scan(customDirs: saved);
+      } catch (_) {
+        await scan();
+      }
+    });
     return const LibraryState();
   }
 
@@ -54,7 +64,7 @@ class LibraryNotifier extends Notifier<LibraryState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final scanner = ref.read(libraryScannerProvider);
-      final songs = await scanner.scanLibrary(directories: customDirs);
+      final songs = await scanner.scanLibrary(directories: customDirs ?? state.directories);
       final albums = await _dbService.getAlbums();
       final artists = await _dbService.getArtists();
 
@@ -71,6 +81,28 @@ class LibraryNotifier extends Notifier<LibraryState> {
         error: 'Failed to scan library: $e',
       );
     }
+  }
+
+  Future<void> addDirectory(String dirPath) async {
+    final trimmed = dirPath.trim();
+    if (trimmed.isEmpty) return;
+    final current = List<String>.from(state.directories);
+    if (current.contains(trimmed)) return;
+    current.add(trimmed);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_prefDirectoriesKey, current);
+    } catch (_) {}
+    await scan(customDirs: current);
+  }
+
+  Future<void> removeDirectory(String dirPath) async {
+    final current = List<String>.from(state.directories)..remove(dirPath);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_prefDirectoriesKey, current);
+    } catch (_) {}
+    await scan(customDirs: current);
   }
 
   List<Song> getSongsForAlbum(String albumTitle) {
