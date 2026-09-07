@@ -55,6 +55,7 @@ class LyricsRepository {
   Future<LyricsResult?> getLyricsForSong(
     Song song, {
     bool forceRefresh = false,
+    bool onlineFetchEnabled = true,
     Future<LocalLyricsResult?> Function(Song song)? localFinderOverride,
   }) async {
     // 1. Tier 1: Local .lrc file check
@@ -102,6 +103,10 @@ class LyricsRepository {
     }
 
     // 3. Tier 3: LRCLIB API Fetch
+    if (!onlineFetchEnabled) {
+      return null;
+    }
+
     try {
       final response = await _lrclibClient.fetchLyrics(
         trackName: song.title,
