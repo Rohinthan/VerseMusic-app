@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/lyrics/lyric_line.dart';
 import '../../core/lyrics/lyrics_repository.dart';
 import '../playback/playback_provider.dart';
+import '../settings/settings_provider.dart';
 
 final lyricsRepositoryProvider =
     Provider<LyricsRepository>((ref) => LyricsRepository());
@@ -120,9 +121,11 @@ class LyricsNotifier extends Notifier<LyricsState> {
 
     try {
       final repo = ref.read(lyricsRepositoryProvider);
+      final isOnlineEnabled = ref.read(lyricsOnlineFetchProvider);
       final result = await repo.getLyricsForSong(
         song,
         forceRefresh: forceRefresh,
+        onlineFetchEnabled: isOnlineEnabled,
       );
 
       if (result != null) {
