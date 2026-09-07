@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:musicapp/core/library/song_model.dart';
+import 'package:musicapp/core/lyrics/cached_lyrics_model.dart';
 import 'package:musicapp/core/storage/database_service.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -84,5 +85,61 @@ void main() {
     final remaining = await dbService.getAllSongs();
     expect(remaining.length, equals(1));
     expect(remaining.first.title, equals('Midnight City'));
+  });
+
+  test('DatabaseService caches, queries, and clears lyrics records', () async {
+    final record = CachedLyricsRecord(
+      songId: 'song-lyrics-1',
+      plainLyrics: 'Line 1\nLine 2',
+      syncedLyrics: '[00:01.00] Line 1\n[00:05.00] Line 2',
+      isSynced: true,
+      isInstrumental: false,
+      source: 'lrclib',
+      fetchedAt: DateTime.fromMillisecondsSinceEpoch(1700000000000),
+    );
+
+    // Initial query should be null
+    final initial = await dbService.getCachedLyrics('song-lyrics-1');
+    expect(initial, isNull);
+
+    // Save record
+    await dbService.saveCachedLyrics(record);
+
+    // Query record
+    final retrieved = await dbService.getCachedLyrics('song-lyrics-1');
+    expect(retrieved, isNotNull);
+    expect(retrieved!.songId, equals('song-lyrics-1'));
+    expect(retrieved.plainLyrics, equals('Line 1\nLine 2'));
+    expect(retrieved.syncedLyrics, equals('[00:01.00] Line 1\n[00:05.00] Line 2'));
+    expect(retrieved.isSynced, isTrue);
+    expect(retrieved.isInstrumental, isFalse);
+    expect(retrieved.source, equals('lrclib'));
+    expect(retrieved.fetchedAt.millisecondsSinceEpoch, equals(1700000000000));
+
+    // Update with instrumental record
+    final instrumentalRecord = CachedLyricsRecord(
+      songId: 'song-lyrics-1',
+      plainLyrics: null,
+      syncedLyrics: null,
+      isSynced: false,
+      isInstrumental: true,
+      source: 'lrclib',
+      fetchedAt: DateTime.fromMillisecondsSinceEpoch(1700000001000),
+    );
+    await dbService.saveCachedLyrics(instrumentalRecord);
+
+    final updated = await dbService.getCachedLyrics('song-lyrics-1');
+    expect(updated, isNotNull);
+    expect(updated!.isInstrumental, isTrue);
+    expect(updated.syncedLyrics, isNull);
+
+    // Delete single
+    await dbService.deleteCachedLyrics('song-lyrics-1');
+    expect(await dbService.getCachedLyrics('song-lyrics-1'), isNull);
+
+    // Clear all
+    await dbService.saveCachedLyrics(record);
+    await dbService.clearLyricsCache();
+    expect(await dbService.getCachedLyrics('song-lyrics-1'), isNull);
   });
 }
