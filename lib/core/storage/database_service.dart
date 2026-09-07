@@ -6,6 +6,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../library/album_model.dart';
 import '../library/artist_model.dart';
 import '../library/song_model.dart';
+import '../lyrics/cached_lyrics_model.dart';
 
 class DatabaseService {
   static Database? _database;
@@ -42,7 +43,7 @@ class DatabaseService {
 
     return await openDatabase(
       dbPath,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE songs (
@@ -65,6 +66,33 @@ class DatabaseService {
             'CREATE INDEX idx_songs_album ON songs(album COLLATE NOCASE)');
         await db.execute(
             'CREATE INDEX idx_songs_title ON songs(title COLLATE NOCASE)');
+
+        await db.execute('''
+          CREATE TABLE cached_lyrics (
+            songId TEXT PRIMARY KEY,
+            plainLyrics TEXT,
+            syncedLyrics TEXT,
+            isSynced INTEGER NOT NULL DEFAULT 0,
+            isInstrumental INTEGER NOT NULL DEFAULT 0,
+            source TEXT NOT NULL,
+            fetchedAtMs INTEGER NOT NULL
+          )
+        ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS cached_lyrics (
+              songId TEXT PRIMARY KEY,
+              plainLyrics TEXT,
+              syncedLyrics TEXT,
+              isSynced INTEGER NOT NULL DEFAULT 0,
+              isInstrumental INTEGER NOT NULL DEFAULT 0,
+              source TEXT NOT NULL,
+              fetchedAtMs INTEGER NOT NULL
+            )
+          ''');
+        }
       },
     );
   }
@@ -216,6 +244,45 @@ class DatabaseService {
         albumCount: albumCount,
       );
     }).toList();
+  }
+
+  /// Retrieves cached lyrics for a song by its [songId]
+  Future<CachedLyricsRecord?> getCachedLyrics(String songId) async {
+    final db = await database;
+    final rows = await db.query(
+      'cached_lyrics',
+      where: 'songId = ?',
+      whereArgs: [songId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return CachedLyricsRecord.fromMap(rows.first);
+  }
+
+  /// Inserts or replaces cached lyrics for a song
+  Future<void> saveCachedLyrics(CachedLyricsRecord record) async {
+    final db = await database;
+    await db.insert(
+      'cached_lyrics',
+      record.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Deletes cached lyrics for a specific [songId]
+  Future<void> deleteCachedLyrics(String songId) async {
+    final db = await database;
+    await db.delete(
+      'cached_lyrics',
+      where: 'songId = ?',
+      whereArgs: [songId],
+    );
+  }
+
+  /// Clears all cached lyrics
+  Future<void> clearLyricsCache() async {
+    final db = await database;
+    await db.delete('cached_lyrics');
   }
 
   Future<void> close() async {
