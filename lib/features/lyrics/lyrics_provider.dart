@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/lyrics/local_lyrics_finder.dart';
-import '../../core/lyrics/lrc_parser.dart';
 import '../../core/lyrics/lyric_line.dart';
+import '../../core/lyrics/lyrics_repository.dart';
 import '../playback/playback_provider.dart';
+
+final lyricsRepositoryProvider =
+    Provider<LyricsRepository>((ref) => LyricsRepository());
 
 @immutable
 class LyricsState {
@@ -13,6 +15,8 @@ class LyricsState {
   final int activeLineIndex;
   final String? lyricsFilePath;
   final String? songId;
+  final bool isInstrumental;
+  final LyricsSource? source;
 
   const LyricsState({
     this.isLoading = false,
@@ -20,10 +24,27 @@ class LyricsState {
     this.activeLineIndex = -1,
     this.lyricsFilePath,
     this.songId,
+    this.isInstrumental = false,
+    this.source,
   });
 
   bool get hasLyrics => lyrics.isNotEmpty;
   bool get isSynced => lyrics.isSynced;
+  bool get isPlainText => lyrics.isNotEmpty && !lyrics.isSynced;
+
+  String get sourceLabel {
+    if (isInstrumental) return 'Instrumental';
+    switch (source) {
+      case LyricsSource.local:
+        return 'Local .lrc file';
+      case LyricsSource.cache:
+        return 'Offline cache';
+      case LyricsSource.lrclib:
+        return 'Synced via LRCLIB';
+      case null:
+        return '';
+    }
+  }
 
   LyricsState copyWith({
     bool? isLoading,
@@ -31,6 +52,8 @@ class LyricsState {
     int? activeLineIndex,
     String? lyricsFilePath,
     String? songId,
+    bool? isInstrumental,
+    LyricsSource? source,
   }) {
     return LyricsState(
       isLoading: isLoading ?? this.isLoading,
@@ -38,6 +61,8 @@ class LyricsState {
       activeLineIndex: activeLineIndex ?? this.activeLineIndex,
       lyricsFilePath: lyricsFilePath ?? this.lyricsFilePath,
       songId: songId ?? this.songId,
+      isInstrumental: isInstrumental ?? this.isInstrumental,
+      source: source ?? this.source,
     );
   }
 }
@@ -80,7 +105,7 @@ class LyricsNotifier extends Notifier<LyricsState> {
     return const LyricsState();
   }
 
-  Future<void> loadLyricsForSong() async {
+  Future<void> loadLyricsForSong({bool forceRefresh = false}) async {
     final song = ref.read(playbackNotifierProvider).currentSong;
     if (song == null) {
       state = const LyricsState();
@@ -94,18 +119,26 @@ class LyricsNotifier extends Notifier<LyricsState> {
     );
 
     try {
-      final result = await LocalLyricsFinder.findLyricsForSong(song);
+      final repo = ref.read(lyricsRepositoryProvider);
+      final result = await repo.getLyricsForSong(
+        song,
+        forceRefresh: forceRefresh,
+      );
+
       if (result != null) {
-        final parsed = LrcParser.parse(result.content);
         final currentPos = ref.read(playbackNotifierProvider).position;
-        final initialIndex = parsed.getActiveLineIndex(currentPos);
+        final initialIndex = result.lyrics.isSynced
+            ? result.lyrics.getActiveLineIndex(currentPos)
+            : -1;
 
         state = LyricsState(
           isLoading: false,
-          lyrics: parsed,
+          lyrics: result.lyrics,
           activeLineIndex: initialIndex,
           lyricsFilePath: result.filePath,
           songId: song.id,
+          isInstrumental: result.isInstrumental,
+          source: result.source,
         );
       } else {
         state = LyricsState(
@@ -114,6 +147,8 @@ class LyricsNotifier extends Notifier<LyricsState> {
           activeLineIndex: -1,
           lyricsFilePath: null,
           songId: song.id,
+          isInstrumental: false,
+          source: null,
         );
       }
     } catch (_) {
@@ -123,8 +158,15 @@ class LyricsNotifier extends Notifier<LyricsState> {
         activeLineIndex: -1,
         lyricsFilePath: null,
         songId: song.id,
+        isInstrumental: false,
+        source: null,
       );
     }
+  }
+
+  /// Forces an online re-fetch from LRCLIB bypassing the offline cache.
+  Future<void> refresh() async {
+    await loadLyricsForSong(forceRefresh: true);
   }
 
   /// Jumps playback position to the timestamp of [index].
