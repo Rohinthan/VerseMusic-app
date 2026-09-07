@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 import '../library/song_model.dart';
+import 'linux_locale.dart';
 import 'verse_audio_handler.dart';
 
 class AudioPlayerService {
@@ -54,6 +55,7 @@ class AudioPlayerService {
 
   Future<Duration?> playSong(Song song) async {
     try {
+      ensureLinuxAudioLocale();
       final file = File(song.filePath);
       if (!await file.exists()) {
         throw Exception('Audio file not found at ${song.filePath}');
