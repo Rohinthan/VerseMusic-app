@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/library/song_model.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../widgets/album_art_widget.dart';
 import '../../widgets/animated_equalizer.dart';
 import '../library/library_provider.dart';
@@ -37,6 +38,7 @@ class _SearchViewState extends ConsumerState<SearchView> {
   Widget build(BuildContext context) {
     final libraryState = ref.watch(libraryNotifierProvider);
     final playback = ref.watch(playbackNotifierProvider);
+    final accentColor = ref.watch(accentColorProvider);
 
     final cleanQuery = _query.trim().toLowerCase();
 
@@ -341,8 +343,7 @@ class _SearchViewState extends ConsumerState<SearchView> {
 
                               return ListTile(
                                 selected: isCurrent,
-                                selectedTileColor:
-                                    const Color(0xFF1DB954).withAlpha(15),
+                                selectedTileColor: accentColor.withAlpha(15),
                                 contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16, vertical: 2),
                                 leading: AlbumArtWidget(
@@ -356,9 +357,7 @@ class _SearchViewState extends ConsumerState<SearchView> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: isCurrent
-                                        ? const Color(0xFF1DB954)
-                                        : Colors.white,
+                                    color: isCurrent ? accentColor : Colors.white,
                                     fontWeight: isCurrent
                                         ? FontWeight.bold
                                         : FontWeight.w500,
@@ -378,8 +377,11 @@ class _SearchViewState extends ConsumerState<SearchView> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     if (isPlayingThis) ...[
-                                      const AnimatedEqualizer(
-                                          isPlaying: true, size: 14),
+                                      AnimatedEqualizer(
+                                        isPlaying: true,
+                                        size: 14,
+                                        color: accentColor,
+                                      ),
                                       const SizedBox(width: 8),
                                     ],
                                     Text(
