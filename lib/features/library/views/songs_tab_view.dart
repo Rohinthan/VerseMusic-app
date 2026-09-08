@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import '../../../core/library/song_model.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../../../widgets/album_art_widget.dart';
 import '../../../widgets/animated_equalizer.dart';
 import '../../playback/playback_provider.dart';
@@ -23,15 +24,18 @@ class SongsTabView extends ConsumerWidget {
     final currentSongId = ref.watch(playbackNotifierProvider.select((s) => s.currentSong?.id));
     final isPlaying = ref.watch(playbackNotifierProvider.select((s) => s.isPlaying));
     final hasCurrentSong = ref.watch(playbackNotifierProvider.select((s) => s.hasCurrentSong));
+    final accentColor = ref.watch(accentColorProvider);
+    final isBright = ThemeData.estimateBrightnessForColor(accentColor) == Brightness.light;
+    final onAccent = isBright ? Colors.black : Colors.white;
 
     if (libraryState.isLoading && libraryState.songs.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: Color(0xFF1DB954)),
-            SizedBox(height: 16),
-            Text(
+            CircularProgressIndicator(color: accentColor),
+            const SizedBox(height: 16),
+            const Text(
               'Scanning local audio files...',
               style: TextStyle(color: Colors.white70),
             ),
@@ -70,8 +74,8 @@ class SongsTabView extends ConsumerWidget {
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1DB954),
-                  foregroundColor: Colors.black,
+                  backgroundColor: accentColor,
+                  foregroundColor: onAccent,
                 ),
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Rescan Library'),
@@ -95,10 +99,10 @@ class SongsTabView extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.music_note_rounded,
                     size: 16,
-                    color: Color(0xFF1DB954),
+                    color: accentColor,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -121,7 +125,7 @@ class SongsTabView extends ConsumerWidget {
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: isPlaying
-                            ? const Color(0xFF1DB954)
+                            ? accentColor
                             : Colors.white54,
                       ),
                     ),
@@ -129,6 +133,7 @@ class SongsTabView extends ConsumerWidget {
                     AnimatedEqualizer(
                       isPlaying: isPlaying,
                       size: 14,
+                      color: accentColor,
                     ),
                   ],
                 ),
@@ -159,7 +164,7 @@ class SongsTabView extends ConsumerWidget {
 
               return ListTile(
                 selected: isCurrent,
-                selectedTileColor: const Color(0xFF1DB954).withAlpha(15),
+                selectedTileColor: accentColor.withAlpha(20),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 4,
@@ -178,7 +183,7 @@ class SongsTabView extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: isCurrent ? const Color(0xFF1DB954) : Colors.white,
+                    color: isCurrent ? accentColor : Colors.white,
                     fontWeight:
                         isCurrent ? FontWeight.bold : FontWeight.w500,
                     fontSize: 14,
@@ -190,7 +195,7 @@ class SongsTabView extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: isCurrent
-                        ? const Color(0xFF1DB954).withAlpha(200)
+                        ? accentColor.withAlpha(200)
                         : Colors.white.withAlpha(150),
                     fontSize: 12,
                   ),
@@ -199,9 +204,10 @@ class SongsTabView extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isPlayingThis) ...[
-                      const AnimatedEqualizer(
+                      AnimatedEqualizer(
                         isPlaying: true,
                         size: 16,
+                        color: accentColor,
                       ),
                       const SizedBox(width: 8),
                     ],
@@ -238,7 +244,7 @@ class SongsTabView extends ConsumerWidget {
                         size: 18,
                         color: Colors.white54,
                       ),
-                      onPressed: () => _showSongDetails(context, ref, song),
+                      onPressed: () => _showSongDetails(context, ref, song, accentColor),
                     ),
                   ],
                 ),
@@ -262,7 +268,7 @@ class SongsTabView extends ConsumerWidget {
     );
   }
 
-  void _showSongDetails(BuildContext context, WidgetRef ref, Song song) {
+  void _showSongDetails(BuildContext context, WidgetRef ref, Song song, Color accentColor) {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF242424),
@@ -301,9 +307,9 @@ class SongsTabView extends ConsumerWidget {
                           const SizedBox(height: 4),
                           Text(
                             song.artist,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
-                              color: Color(0xFF1DB954),
+                              color: accentColor,
                             ),
                           ),
                           Text(
@@ -321,7 +327,7 @@ class SongsTabView extends ConsumerWidget {
                 const SizedBox(height: 16),
                 const Divider(color: Colors.white12),
                 ListTile(
-                  leading: const Icon(Icons.playlist_play_rounded, color: Color(0xFF1DB954)),
+                  leading: Icon(Icons.playlist_play_rounded, color: accentColor),
                   title: const Text('Play Next', style: TextStyle(color: Colors.white, fontSize: 14)),
                   subtitle: const Text('Insert this track to play next', style: TextStyle(color: Colors.white54, fontSize: 11)),
                   onTap: () {
@@ -336,7 +342,7 @@ class SongsTabView extends ConsumerWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.queue_music_rounded, color: Color(0xFF1DB954)),
+                  leading: Icon(Icons.queue_music_rounded, color: accentColor),
                   title: const Text('Add to Queue', style: TextStyle(color: Colors.white, fontSize: 14)),
                   subtitle: const Text('Append this track to end of queue', style: TextStyle(color: Colors.white54, fontSize: 11)),
                   onTap: () {
