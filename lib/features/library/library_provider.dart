@@ -52,7 +52,7 @@ class LibraryNotifier extends Notifier<LibraryState> {
       try {
         final prefs = await SharedPreferences.getInstance();
         final saved = prefs.getStringList(_prefDirectoriesKey);
-        await scan(customDirs: saved);
+        await scan(customDirs: (saved != null && saved.isNotEmpty) ? saved : null);
       } catch (_) {
         await scan();
       }
@@ -64,7 +64,14 @@ class LibraryNotifier extends Notifier<LibraryState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final scanner = ref.read(libraryScannerProvider);
-      final songs = await scanner.scanLibrary(directories: customDirs ?? state.directories);
+      final List<String>? effectiveDirs;
+      if (customDirs != null) {
+        effectiveDirs = customDirs.isNotEmpty ? customDirs : null;
+      } else {
+        effectiveDirs = state.directories.isNotEmpty ? state.directories : null;
+      }
+
+      final songs = await scanner.scanLibrary(directories: effectiveDirs);
       final albums = await _dbService.getAlbums();
       final artists = await _dbService.getArtists();
 
@@ -73,7 +80,7 @@ class LibraryNotifier extends Notifier<LibraryState> {
         songs: songs,
         albums: albums,
         artists: artists,
-        directories: customDirs ?? state.directories,
+        directories: effectiveDirs ?? const [],
       );
     } catch (e) {
       state = state.copyWith(
@@ -100,7 +107,11 @@ class LibraryNotifier extends Notifier<LibraryState> {
     final current = List<String>.from(state.directories)..remove(dirPath);
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_prefDirectoriesKey, current);
+      if (current.isEmpty) {
+        await prefs.remove(_prefDirectoriesKey);
+      } else {
+        await prefs.setStringList(_prefDirectoriesKey, current);
+      }
     } catch (_) {}
     await scan(customDirs: current);
   }
