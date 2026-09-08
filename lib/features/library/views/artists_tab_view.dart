@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../../playback/playback_provider.dart';
 import '../library_provider.dart';
 import 'artist_detail_view.dart';
@@ -12,15 +13,16 @@ class ArtistsTabView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final libraryState = ref.watch(libraryNotifierProvider);
     final playback = ref.watch(playbackNotifierProvider);
+    final accentColor = ref.watch(accentColorProvider);
 
     if (libraryState.isLoading && libraryState.artists.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: Color(0xFF1DB954)),
-            SizedBox(height: 16),
-            Text(
+            CircularProgressIndicator(color: accentColor),
+            const SizedBox(height: 16),
+            const Text(
               'Loading artists...',
               style: TextStyle(color: Colors.white70),
             ),
