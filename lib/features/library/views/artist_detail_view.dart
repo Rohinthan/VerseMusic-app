@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/library/artist_model.dart';
 import '../../../core/library/song_model.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../../../widgets/animated_equalizer.dart';
 import '../../playback/playback_provider.dart';
 import '../library_provider.dart';
@@ -37,6 +38,9 @@ class ArtistDetailView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final libraryState = ref.watch(libraryNotifierProvider);
     final playback = ref.watch(playbackNotifierProvider);
+    final accentColor = ref.watch(accentColorProvider);
+    final isBright = ThemeData.estimateBrightnessForColor(accentColor) == Brightness.light;
+    final onAccent = isBright ? Colors.black : Colors.white;
 
     final artistSongs = libraryState.songs
         .where((s) => s.artist.toLowerCase() == artist.name.toLowerCase())
@@ -106,12 +110,12 @@ class ArtistDetailView extends ConsumerWidget {
                                 shape: BoxShape.circle,
                                 color: const Color(0xFF282828),
                                 border: Border.all(
-                                  color: const Color(0xFF1DB954),
+                                  color: accentColor,
                                   width: 2,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF1DB954).withAlpha(40),
+                                    color: accentColor.withAlpha(40),
                                     blurRadius: 16,
                                     spreadRadius: 2,
                                   ),
@@ -159,7 +163,7 @@ class ArtistDetailView extends ConsumerWidget {
             ),
           ),
 
-          // Control Bar: Big Green Play/Pause button
+          // Control Bar: Big Play/Pause button
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
@@ -167,9 +171,9 @@ class ArtistDetailView extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'ALL SONGS BY ${artist.name.toUpperCase()}',
+                    'TRACKS',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
                       color: Colors.white.withAlpha(160),
@@ -190,20 +194,20 @@ class ArtistDetailView extends ConsumerWidget {
                       child: Container(
                         width: 48,
                         height: 48,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Color(0xFF1DB954),
+                          color: accentColor,
                           boxShadow: [
                             BoxShadow(
-                              color: Color(0x551DB954),
+                              color: accentColor.withAlpha(85),
                               blurRadius: 10,
-                              offset: Offset(0, 4),
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: Icon(
                           isArtistPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                          color: Colors.black,
+                          color: onAccent,
                           size: 30,
                         ),
                       ),
@@ -227,20 +231,20 @@ class ArtistDetailView extends ConsumerWidget {
 
                   return ListTile(
                     selected: isCurrent,
-                    selectedTileColor: const Color(0xFF1DB954).withAlpha(15),
+                    selectedTileColor: accentColor.withAlpha(20),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
                     leading: SizedBox(
                       width: 32,
                       child: Center(
                         child: isPlayingThis
-                            ? const AnimatedEqualizer(isPlaying: true, size: 14)
+                            ? AnimatedEqualizer(isPlaying: true, size: 14, color: accentColor)
                             : Text(
                                 '${index + 1}',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: isCurrent
-                                      ? const Color(0xFF1DB954)
+                                      ? accentColor
                                       : Colors.white.withAlpha(140),
                                 ),
                               ),
@@ -251,7 +255,7 @@ class ArtistDetailView extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: isCurrent ? const Color(0xFF1DB954) : Colors.white,
+                        color: isCurrent ? accentColor : Colors.white,
                         fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
                         fontSize: 14,
                       ),
