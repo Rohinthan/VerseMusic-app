@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../lyrics_provider.dart';
 
 class SyncedLyricsView extends ConsumerStatefulWidget {
@@ -67,6 +68,9 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
   @override
   Widget build(BuildContext context) {
     final lyricsState = ref.watch(lyricsNotifierProvider);
+    final accentColor = ref.watch(accentColorProvider);
+    final isBright = ThemeData.estimateBrightnessForColor(accentColor) == Brightness.light;
+    final onAccent = isBright ? Colors.black : Colors.white;
 
     // Listen for active line changes and auto-scroll
     ref.listen(lyricsNotifierProvider.select((s) => s.activeLineIndex), (prev, next) {
@@ -78,13 +82,13 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
     });
 
     if (lyricsState.isLoading) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: Color(0xFF1DB954)),
-            SizedBox(height: 16),
-            Text(
+            CircularProgressIndicator(color: accentColor),
+            const SizedBox(height: 16),
+            const Text(
               'Searching for lyrics...',
               style: TextStyle(color: Colors.white70, fontSize: 13),
             ),
@@ -105,13 +109,13 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
                 height: 72,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF1DB954).withAlpha(25),
-                  border: Border.all(color: const Color(0xFF1DB954).withAlpha(60)),
+                  color: accentColor.withAlpha(25),
+                  border: Border.all(color: accentColor.withAlpha(60)),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.music_note_rounded,
                   size: 36,
-                  color: Color(0xFF1DB954),
+                  color: accentColor,
                 ),
               ),
               const SizedBox(height: 20),
@@ -313,14 +317,14 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
                         color: !isSynced
                             ? Colors.white.withAlpha(210)
                             : (isActive
-                                ? const Color(0xFF1DB954)
+                                ? accentColor
                                 : isPast
                                     ? Colors.white.withAlpha(90)
                                     : Colors.white.withAlpha(160)),
                         shadows: isActive
                             ? [
                                 BoxShadow(
-                                  color: const Color(0xFF1DB954).withAlpha(80),
+                                  color: accentColor.withAlpha(80),
                                   blurRadius: 18,
                                 ),
                               ]
@@ -345,7 +349,7 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1DB954),
+                      color: accentColor,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
@@ -355,15 +359,15 @@ class _SyncedLyricsViewState extends ConsumerState<SyncedLyricsView> {
                         ),
                       ],
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.sync_rounded, color: Colors.black, size: 16),
-                        SizedBox(width: 6),
+                        Icon(Icons.sync_rounded, color: onAccent, size: 16),
+                        const SizedBox(width: 6),
                         Text(
                           'Sync to active line',
                           style: TextStyle(
-                            color: Colors.black,
+                            color: onAccent,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
