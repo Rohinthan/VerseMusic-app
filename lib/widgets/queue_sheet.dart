@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/audio/playback_state.dart';
+import '../core/theme/theme_provider.dart';
 import '../features/playback/playback_provider.dart';
 import 'album_art_widget.dart';
 import 'animated_equalizer.dart';
@@ -22,6 +23,7 @@ class QueueSheet extends ConsumerWidget {
     final isPlaying = ref.watch(playbackNotifierProvider.select((s) => s.isPlaying));
     final isShuffled = ref.watch(playbackNotifierProvider.select((s) => s.isShuffled));
     final repeatMode = ref.watch(playbackNotifierProvider.select((s) => s.repeatMode));
+    final accentColor = ref.watch(accentColorProvider);
 
     return Material(
       color: const Color(0xFF181818),
@@ -74,7 +76,7 @@ class QueueSheet extends ConsumerWidget {
                     if (upcoming.isNotEmpty)
                       TextButton(
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF1DB954),
+                          foregroundColor: accentColor,
                         ),
                         onPressed: () {
                           ref.read(playbackNotifierProvider.notifier).clearQueue();
@@ -122,7 +124,7 @@ class QueueSheet extends ConsumerWidget {
                         color: const Color(0xFF242424),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: const Color(0xFF1DB954).withAlpha(40),
+                          color: accentColor.withAlpha(40),
                           width: 1,
                         ),
                       ),
@@ -143,8 +145,8 @@ class QueueSheet extends ConsumerWidget {
                                   currentSong.title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Color(0xFF1DB954),
+                                  style: TextStyle(
+                                    color: accentColor,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -338,13 +340,13 @@ class QueueSheet extends ConsumerWidget {
                 TextButton.icon(
                   style: TextButton.styleFrom(
                     foregroundColor: isShuffled
-                        ? const Color(0xFF1DB954)
+                        ? accentColor
                         : Colors.white60,
                   ),
                   icon: Icon(
                     Icons.shuffle_rounded,
                     color: isShuffled
-                        ? const Color(0xFF1DB954)
+                        ? accentColor
                         : Colors.white60,
                     size: 20,
                   ),
@@ -361,7 +363,7 @@ class QueueSheet extends ConsumerWidget {
                 TextButton.icon(
                   style: TextButton.styleFrom(
                     foregroundColor: repeatMode != AudioRepeatMode.off
-                        ? const Color(0xFF1DB954)
+                        ? accentColor
                         : Colors.white60,
                   ),
                   icon: Icon(
@@ -369,7 +371,7 @@ class QueueSheet extends ConsumerWidget {
                         ? Icons.repeat_one_rounded
                         : Icons.repeat_rounded,
                     color: repeatMode != AudioRepeatMode.off
-                        ? const Color(0xFF1DB954)
+                        ? accentColor
                         : Colors.white60,
                     size: 20,
                   ),
