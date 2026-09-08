@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../../navigation/navigation_provider.dart';
 import '../library_provider.dart';
 import 'albums_tab_view.dart';
@@ -14,6 +15,9 @@ class LibraryView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final libraryState = ref.watch(libraryNotifierProvider);
     final navState = ref.watch(navigationNotifierProvider);
+    final accentColor = ref.watch(accentColorProvider);
+    final isBright = ThemeData.estimateBrightnessForColor(accentColor) == Brightness.light;
+    final onAccent = isBright ? Colors.black : Colors.white;
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -25,12 +29,12 @@ class LibraryView extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: const Color(0xFF1DB954),
+                color: accentColor,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.graphic_eq_rounded,
-                color: Colors.black,
+                color: onAccent,
                 size: 20,
               ),
             ),
@@ -57,12 +61,12 @@ class LibraryView extends ConsumerWidget {
         actions: [
           IconButton(
             icon: libraryState.isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFF1DB954),
+                      color: accentColor,
                     ),
                   )
                 : const Icon(Icons.refresh_rounded),
@@ -88,6 +92,8 @@ class LibraryView extends ConsumerWidget {
                     count: libraryState.songs.length,
                     tab: LibraryTab.songs,
                     isSelected: navState.libraryTab == LibraryTab.songs,
+                    accentColor: accentColor,
+                    onAccent: onAccent,
                   ),
                   const SizedBox(width: 8),
                   _buildPillTab(
@@ -97,6 +103,8 @@ class LibraryView extends ConsumerWidget {
                     count: libraryState.albums.length,
                     tab: LibraryTab.albums,
                     isSelected: navState.libraryTab == LibraryTab.albums,
+                    accentColor: accentColor,
+                    onAccent: onAccent,
                   ),
                   const SizedBox(width: 8),
                   _buildPillTab(
@@ -106,6 +114,8 @@ class LibraryView extends ConsumerWidget {
                     count: libraryState.artists.length,
                     tab: LibraryTab.artists,
                     isSelected: navState.libraryTab == LibraryTab.artists,
+                    accentColor: accentColor,
+                    onAccent: onAccent,
                   ),
                 ],
               ),
@@ -131,6 +141,8 @@ class LibraryView extends ConsumerWidget {
     required int count,
     required LibraryTab tab,
     required bool isSelected,
+    required Color accentColor,
+    required Color onAccent,
   }) {
     return GestureDetector(
       onTap: () {
@@ -141,7 +153,7 @@ class LibraryView extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF1DB954)
+              ? accentColor
               : const Color(0xFF282828),
           borderRadius: BorderRadius.circular(20),
         ),
@@ -153,7 +165,7 @@ class LibraryView extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.black : Colors.white,
+                color: isSelected ? onAccent : Colors.white,
               ),
             ),
             if (count > 0) ...[
@@ -162,7 +174,7 @@ class LibraryView extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? Colors.black.withAlpha(30)
+                      ? onAccent.withAlpha(35)
                       : Colors.white.withAlpha(20),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -171,7 +183,7 @@ class LibraryView extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.black87 : Colors.white70,
+                    color: isSelected ? onAccent : Colors.white70,
                   ),
                 ),
               ),
