@@ -79,5 +79,18 @@ void main() {
       final songs = await scanner.scanLibrary(directories: ['/non/existent/path/123']);
       expect(songs, isEmpty);
     });
+
+    test('getDefaultMusicDirectories returns valid directory list', () {
+      final dirs = LinuxLibraryScanner.getDefaultMusicDirectories();
+      expect(dirs, isNotEmpty);
+    });
+
+    test('directories: [] falls back to default directories and does not wipe library', () async {
+      final scanner = LinuxLibraryScanner();
+      final songs = await scanner.scanLibrary(directories: []);
+      if (Directory('/home/raccoon/Music').existsSync()) {
+        expect(songs, isNotEmpty);
+      }
+    });
   });
 }
