@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/audio/playback_state.dart';
+import '../core/theme/theme_provider.dart';
 import '../features/lyrics/views/synced_lyrics_view.dart';
 import '../features/playback/playback_provider.dart';
 import 'album_art_widget.dart';
@@ -28,6 +29,9 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
   @override
   Widget build(BuildContext context) {
     final playback = ref.watch(playbackNotifierProvider);
+    final accentColor = ref.watch(accentColorProvider);
+    final isBright = ThemeData.estimateBrightnessForColor(accentColor) == Brightness.light;
+    final onAccent = isBright ? Colors.black : Colors.white;
     final song = playback.currentSong;
 
     if (song == null) {
@@ -63,7 +67,7 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
             if (playback.playlist.isNotEmpty)
               Text(
                 'Track ${playback.currentIndex + 1} of ${playback.playlist.length}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF1DB954)),
+                style: TextStyle(fontSize: 11, color: accentColor),
               ),
           ],
         ),
@@ -104,7 +108,7 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF1DB954).withAlpha(35),
+                                      color: accentColor.withAlpha(35),
                                       blurRadius: 36,
                                       spreadRadius: 4,
                                       offset: const Offset(0, 12),
@@ -231,7 +235,7 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                     iconSize: 26,
                     icon: const Icon(Icons.shuffle_rounded),
                     color: playback.isShuffled
-                        ? const Color(0xFF1DB954)
+                        ? accentColor
                         : Colors.white60,
                     tooltip: playback.isShuffled ? 'Shuffle: On' : 'Shuffle: Off',
                     onPressed: () => ref
@@ -249,7 +253,7 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                         ref.read(playbackNotifierProvider.notifier).playPrevious(),
                   ),
 
-                  // Large Circular Play/Pause button with Spotify Green glow
+                  // Large Circular Play/Pause button with dynamic accent glow
                   GestureDetector(
                     onTap: () => ref
                         .read(playbackNotifierProvider.notifier)
@@ -257,26 +261,26 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                     child: Container(
                       width: 68,
                       height: 68,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Color(0xFF1DB954),
+                        color: accentColor,
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0x661DB954),
+                            color: accentColor.withAlpha(85),
                             blurRadius: 18,
                             spreadRadius: 2,
-                            offset: Offset(0, 4),
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: Center(
                         child: playback.isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 28,
                                 height: 28,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 3,
-                                  color: Colors.black,
+                                  color: onAccent,
                                 ),
                               )
                             : Icon(
@@ -284,7 +288,7 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                                     ? Icons.pause_rounded
                                     : Icons.play_arrow_rounded,
                                 size: 40,
-                                color: Colors.black,
+                                color: onAccent,
                               ),
                       ),
                     ),
@@ -309,7 +313,7 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                           : Icons.repeat_rounded,
                     ),
                     color: playback.repeatMode != AudioRepeatMode.off
-                        ? const Color(0xFF1DB954)
+                        ? accentColor
                         : Colors.white60,
                     tooltip: playback.repeatMode == AudioRepeatMode.one
                         ? 'Repeat: One'
@@ -373,7 +377,7 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                             : Icons.lyrics_outlined,
                       ),
                       color: _showLyrics
-                          ? const Color(0xFF1DB954)
+                          ? accentColor
                           : Colors.white70,
                       tooltip: _showLyrics ? 'Show Artwork' : 'Live Synced Lyrics',
                       onPressed: () {
@@ -385,7 +389,7 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
                     IconButton(
                       icon: const Icon(Icons.queue_music_rounded),
                       color: playback.upcomingSongs.isNotEmpty
-                          ? const Color(0xFF1DB954)
+                          ? accentColor
                           : Colors.white70,
                       tooltip: 'Up Next Queue',
                       onPressed: () {
