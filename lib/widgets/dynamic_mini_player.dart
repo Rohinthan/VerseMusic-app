@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/theme/theme_provider.dart';
 import '../features/playback/playback_provider.dart';
 import 'album_art_widget.dart';
 import 'animated_equalizer.dart';
@@ -11,6 +12,7 @@ class DynamicMiniPlayer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playback = ref.watch(playbackNotifierProvider);
+    final accentColor = ref.watch(accentColorProvider);
     final song = playback.currentSong;
 
     if (song == null) {
@@ -48,7 +50,7 @@ class DynamicMiniPlayer extends ConsumerWidget {
             LinearProgressIndicator(
               value: playback.progress,
               backgroundColor: Colors.white.withAlpha(20),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF1DB954)),
+              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
               minHeight: 2.5,
             ),
 
@@ -80,7 +82,7 @@ class DynamicMiniPlayer extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: playback.isPlaying
-                                ? const Color(0xFF1DB954)
+                                ? accentColor
                                 : Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -102,12 +104,12 @@ class DynamicMiniPlayer extends ConsumerWidget {
 
                   // Pulsing Equalizer indicator
                   if (playback.isPlaying) ...[
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: AnimatedEqualizer(
                         isPlaying: true,
                         size: 16,
-                        color: Color(0xFF1DB954),
+                        color: accentColor,
                       ),
                     ),
                   ],
@@ -116,12 +118,12 @@ class DynamicMiniPlayer extends ConsumerWidget {
                   IconButton(
                     iconSize: 30,
                     icon: playback.isLoading
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Color(0xFF1DB954),
+                              color: accentColor,
                             ),
                           )
                         : Icon(
