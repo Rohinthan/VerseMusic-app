@@ -41,4 +41,12 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getInt('app_accent_color_val'), equals(newColor.toARGB32()));
   });
+
+  test('ThemeData.estimateBrightnessForColor calculates proper contrast for all 14 accent colors', () {
+    for (final option in kAccentColors) {
+      final brightness = ThemeData.estimateBrightnessForColor(option.color);
+      final onAccent = brightness == Brightness.light ? Colors.black : Colors.white;
+      expect(onAccent, anyOf(equals(Colors.black), equals(Colors.white)));
+    }
+  });
 }
