@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../../../widgets/album_art_widget.dart';
 import '../../playback/playback_provider.dart';
 import '../library_provider.dart';
@@ -13,15 +14,16 @@ class AlbumsTabView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final libraryState = ref.watch(libraryNotifierProvider);
     final playback = ref.watch(playbackNotifierProvider);
+    final accentColor = ref.watch(accentColorProvider);
 
     if (libraryState.isLoading && libraryState.albums.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: Color(0xFF1DB954)),
-            SizedBox(height: 16),
-            Text(
+            CircularProgressIndicator(color: accentColor),
+            const SizedBox(height: 16),
+            const Text(
               'Loading albums...',
               style: TextStyle(color: Colors.white70),
             ),
@@ -169,9 +171,9 @@ class AlbumsTabView extends ConsumerWidget {
                     // Track count badge
                     Text(
                       '${album.songCount} ${album.songCount == 1 ? 'song' : 'songs'}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF1DB954),
+                        color: accentColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
