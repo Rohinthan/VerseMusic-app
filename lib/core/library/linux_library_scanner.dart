@@ -20,7 +20,9 @@ class LinuxLibraryScanner implements LibraryScanner {
 
   @override
   Future<List<Song>> scanLibrary({List<String>? directories}) async {
-    final dirsToScan = directories ?? _getDefaultDirectories();
+    final dirsToScan = (directories != null && directories.isNotEmpty)
+        ? directories
+        : getDefaultMusicDirectories();
     final List<Song> songs = [];
     final Set<String> seenPaths = {};
 
@@ -77,8 +79,10 @@ class LinuxLibraryScanner implements LibraryScanner {
       await _dbService.saveSongs(songsToSave);
     }
 
-    // 3. Prune songs from SQLite that were deleted on disk
-    await _dbService.pruneMissingSongs(seenPaths);
+    // 3. Prune songs from SQLite that were deleted on disk (safeguard against empty scan)
+    if (seenPaths.isNotEmpty) {
+      await _dbService.pruneMissingSongs(seenPaths);
+    }
 
     // Sort songs alphabetically by title
     songs.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
@@ -125,7 +129,7 @@ class LinuxLibraryScanner implements LibraryScanner {
     return null;
   }
 
-  List<String> _getDefaultDirectories() {
+  static List<String> getDefaultMusicDirectories() {
     final home = Platform.environment['HOME'];
     final list = <String>[];
     if (home != null) {
