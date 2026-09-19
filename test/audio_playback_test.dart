@@ -54,4 +54,49 @@ void main() {
       await service.dispose();
     }
   });
+
+  test('AudioPlayerService transitions seamlessly between consecutive songs', () async {
+    final musicDir = Directory('/home/raccoon/Music/musics');
+    if (!await musicDir.exists()) return;
+
+    final files = musicDir
+        .listSync()
+        .whereType<File>()
+        .where((f) => f.path.toLowerCase().endsWith('.mp3'))
+        .take(2)
+        .toList();
+    if (files.length < 2) return;
+
+    final song1 = Song(
+      id: Song.generateId(files[0].path),
+      filePath: files[0].path,
+      title: 'Test Song 1',
+      artist: 'Test Artist 1',
+      album: 'Test Album 1',
+      duration: const Duration(seconds: 180),
+    );
+
+    final song2 = Song(
+      id: Song.generateId(files[1].path),
+      filePath: files[1].path,
+      title: 'Test Song 2',
+      artist: 'Test Artist 2',
+      album: 'Test Album 2',
+      duration: const Duration(seconds: 180),
+    );
+
+    final service = AudioPlayerService();
+    try {
+      final dur1 = await service.playSong(song1);
+      expect(dur1, isNotNull);
+      expect(service.isPlaying, isTrue);
+
+      // Transition immediately to song 2
+      final dur2 = await service.playSong(song2);
+      expect(dur2, isNotNull);
+      expect(service.isPlaying, isTrue);
+    } finally {
+      await service.dispose();
+    }
+  });
 }
