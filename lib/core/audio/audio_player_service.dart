@@ -61,10 +61,7 @@ class AudioPlayerService {
         throw Exception('Audio file not found at ${song.filePath}');
       }
 
-      // Stop any current playback before loading new source
-      await _player.stop();
-
-      // Load file into player
+      // Load new audio file directly into player (seamlessly replaces previous source)
       final duration = await _player.setFilePath(song.filePath);
 
       // Update background notification
