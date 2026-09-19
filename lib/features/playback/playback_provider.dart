@@ -16,6 +16,9 @@ final audioPlayerServiceProvider = Provider<AudioPlayerService>((ref) {
 class PlaybackNotifier extends Notifier<PlaybackState> {
   late final AudioPlayerService _audioService;
   final List<StreamSubscription> _subscriptions = [];
+  bool _isHandlingCompletion = false;
+  String? _lastCompletedSongId;
+  int _playSessionId = 0;
 
   @override
   PlaybackState build() {
@@ -50,12 +53,19 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
         final processingState = playerState.processingState;
         final isPlaying = playerState.playing;
 
+        // Reset completion debounce when player moves out of completed state
+        if (processingState == ProcessingState.ready ||
+            processingState == ProcessingState.loading) {
+          _lastCompletedSongId = null;
+        }
+
         PlayerStatus status;
         if (processingState == ProcessingState.loading ||
             processingState == ProcessingState.buffering) {
           status = PlayerStatus.loading;
         } else if (processingState == ProcessingState.completed) {
           status = PlayerStatus.completed;
+          state = state.copyWith(status: status);
           _handleTrackCompletion();
           return;
         } else if (isPlaying) {
@@ -93,24 +103,39 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
   }
 
   Future<void> _handleTrackCompletion() async {
-    if (state.repeatMode == AudioRepeatMode.one) {
-      await seek(Duration.zero);
-      await _audioService.play();
-      return;
-    }
+    if (_isHandlingCompletion) return;
+    final currentSong = state.currentSong;
+    if (currentSong == null) return;
 
-    if (state.hasNext) {
-      await playSong(state.playlist[state.currentIndex + 1]);
-    } else if (state.repeatMode == AudioRepeatMode.all && state.playlist.isNotEmpty) {
-      await playSong(state.playlist[0]);
-    } else {
-      // Reached end of playlist with AudioRepeatMode.off
-      state = state.copyWith(status: PlayerStatus.paused);
-      await seek(Duration.zero);
+    // Prevent duplicate completion handling for the same track
+    if (_lastCompletedSongId == currentSong.id) return;
+
+    _isHandlingCompletion = true;
+    _lastCompletedSongId = currentSong.id;
+
+    try {
+      if (state.repeatMode == AudioRepeatMode.one) {
+        await seek(Duration.zero);
+        await _audioService.play();
+        return;
+      }
+
+      if (state.hasNext) {
+        await playSong(state.playlist[state.currentIndex + 1]);
+      } else if (state.repeatMode == AudioRepeatMode.all && state.playlist.isNotEmpty) {
+        await playSong(state.playlist[0]);
+      } else {
+        // Reached end of playlist with AudioRepeatMode.off
+        state = state.copyWith(status: PlayerStatus.paused);
+        await seek(Duration.zero);
+      }
+    } finally {
+      _isHandlingCompletion = false;
     }
   }
 
   Future<void> playSong(Song song, {List<Song>? playlist}) async {
+    final sessionId = ++_playSessionId;
     final list = playlist ?? state.playlist;
     final index = list.indexWhere((s) => s.id == song.id);
 
@@ -133,10 +158,12 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
 
     try {
       final detectedDuration = await _audioService.playSong(song);
+      if (sessionId != _playSessionId) return;
       if (detectedDuration != null && detectedDuration != Duration.zero) {
         state = state.copyWith(duration: detectedDuration);
       }
     } catch (e) {
+      if (sessionId != _playSessionId) return;
       state = state.copyWith(
         status: PlayerStatus.error,
         errorMessage: 'Playback error: $e',
@@ -156,12 +183,6 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
 
   Future<void> playNext() async {
     if (state.playlist.isEmpty) return;
-
-    if (state.repeatMode == AudioRepeatMode.one) {
-      await seek(Duration.zero);
-      await _audioService.play();
-      return;
-    }
 
     final nextIndex = state.currentIndex + 1;
     if (nextIndex < state.playlist.length) {
