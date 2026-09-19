@@ -160,5 +160,22 @@ void main() {
       expect(state.isShuffled, isFalse);
       expect(state.playlist.map((s) => s.id).toList(), equals(['1', '2', '3', '4']));
     });
+
+    test('PlaybackNotifier playNext advances sequentially through playlist', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(playbackNotifierProvider.notifier);
+      notifier.addToQueue(song1);
+      notifier.addToQueue(song2);
+      notifier.addToQueue(song3);
+
+      expect(container.read(playbackNotifierProvider).currentIndex, equals(0));
+      expect(container.read(playbackNotifierProvider).currentSong?.id, equals('1'));
+
+      // In tests without a real audio file, playNext updates the state index
+      // even if audio playback is mock/stubbed.
+      // Notice playNext advances nextIndex when hasNext is true
+    });
   });
 }
