@@ -3,11 +3,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
+import 'package:window_manager/window_manager.dart';
 import 'core/audio/linux_locale.dart';
 import 'core/theme/theme_provider.dart';
+import 'core/window/window_service.dart';
+import 'features/playback/views/floating_pop_window_view.dart';
 import 'features/shell/main_shell.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Ensure LC_NUMERIC is "C" on Linux before libmpv/media_kit initializes
@@ -36,6 +39,16 @@ void main() {
     );
   }
 
+  // Initialize desktop window manager for floating pop-up player support
+  if (!Platform.environment.containsKey('FLUTTER_TEST') &&
+      (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
+    try {
+      await windowManager.ensureInitialized();
+    } catch (e) {
+      debugPrint('WindowManager init: $e');
+    }
+  }
+
   runApp(
     const ProviderScope(
       child: VerseMusicApp(),
@@ -49,6 +62,7 @@ class VerseMusicApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final accentColor = ref.watch(accentColorProvider);
+    final isMiniWindow = ref.watch(isMiniWindowModeProvider);
 
     return MaterialApp(
       title: 'Verse Music Player',
@@ -70,7 +84,7 @@ class VerseMusicApp extends ConsumerWidget {
           ),
         ),
       ),
-      home: const MainShell(),
+      home: isMiniWindow ? const FloatingPopWindowView() : const MainShell(),
     );
   }
 }
