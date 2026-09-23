@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/notifications/desktop_notification_service.dart';
 import '../../core/storage/database_service.dart';
 
 class LyricsOnlineFetchNotifier extends Notifier<bool> {
@@ -33,6 +34,40 @@ class LyricsOnlineFetchNotifier extends Notifier<bool> {
 final lyricsOnlineFetchProvider =
     NotifierProvider<LyricsOnlineFetchNotifier, bool>(
         LyricsOnlineFetchNotifier.new);
+
+class DesktopNotificationNotifier extends Notifier<bool> {
+  static const String _prefKey = 'desktop_notification_enabled';
+
+  @override
+  bool build() {
+    _loadFromPreferences();
+    return true; // Default enabled
+  }
+
+  Future<void> _loadFromPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final val = prefs.getBool(_prefKey);
+      if (val != null) {
+        state = val;
+        DesktopNotificationService.enabled = val;
+      }
+    } catch (_) {}
+  }
+
+  Future<void> toggle(bool enabled) async {
+    state = enabled;
+    DesktopNotificationService.enabled = enabled;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefKey, enabled);
+    } catch (_) {}
+  }
+}
+
+final desktopNotificationEnabledProvider =
+    NotifierProvider<DesktopNotificationNotifier, bool>(
+        DesktopNotificationNotifier.new);
 
 class SettingsService {
   final DatabaseService _dbService;
