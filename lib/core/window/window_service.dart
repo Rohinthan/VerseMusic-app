@@ -4,8 +4,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
+class MiniWindowModeNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setMini(bool val) => state = val;
+  void toggle() => state = !state;
+}
+
 /// Provider for whether the app is currently in Floating Mini Pop-up Window mode.
-final isMiniWindowModeProvider = StateProvider<bool>((ref) => false);
+final isMiniWindowModeProvider =
+    NotifierProvider<MiniWindowModeNotifier, bool>(MiniWindowModeNotifier.new);
 
 /// Manages desktop window resizing and always-on-top behavior for the mini pop-up player.
 class WindowService {
@@ -18,7 +27,7 @@ class WindowService {
 
   /// Enters floating pop-up window mode (compact always-on-top window).
   static Future<void> enterMiniWindowMode(WidgetRef ref) async {
-    ref.read(isMiniWindowModeProvider.notifier).state = true;
+    ref.read(isMiniWindowModeProvider.notifier).setMini(true);
 
     if (!isDesktop) return;
 
@@ -37,7 +46,7 @@ class WindowService {
 
   /// Exits floating pop-up window mode and restores the normal application window size.
   static Future<void> exitMiniWindowMode(WidgetRef ref) async {
-    ref.read(isMiniWindowModeProvider.notifier).state = false;
+    ref.read(isMiniWindowModeProvider.notifier).setMini(false);
 
     if (!isDesktop) return;
 
