@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/audio/playback_state.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/window/window_service.dart';
 import '../playback_provider.dart';
@@ -102,7 +101,7 @@ class FloatingPopWindowView extends ConsumerWidget {
                       ? Image.file(
                           File(currentSong.artPath!),
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(
+                          errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.music_note_rounded,
                             color: accentColor,
                             size: 22,
