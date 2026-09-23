@@ -115,8 +115,8 @@ void main() {
 
     expect(container.read(lyricsOnlineFetchProvider), isTrue);
 
-    // Toggle switch off
-    await tester.tap(find.byType(Switch));
+    // Toggle lyrics switch off
+    await tester.tap(find.byType(Switch).first);
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(container.read(lyricsOnlineFetchProvider), isFalse);
