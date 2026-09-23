@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_service_mpris/audio_service_mpris.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../library/song_model.dart';
+import '../notifications/desktop_notification_service.dart';
 import 'linux_locale.dart';
 import 'verse_audio_handler.dart';
 
@@ -29,7 +32,17 @@ class AudioPlayerService {
     void Function(int)? onRepeatMode,
     void Function(bool)? onShuffleMode,
   }) async {
-    if (Platform.isAndroid) {
+    if (Platform.environment.containsKey('FLUTTER_TEST')) return;
+
+    if (Platform.isLinux) {
+      try {
+        AudioServiceMpris.registerWith();
+      } catch (e) {
+        debugPrint('AudioServiceMpris registration error: $e');
+      }
+    }
+
+    if (Platform.isAndroid || Platform.isLinux) {
       try {
         final handler = VerseAudioHandler(_player)
           ..onSkipToNext = onNext
@@ -47,8 +60,8 @@ class AudioPlayerService {
             androidNotificationIcon: 'mipmap/ic_launcher',
           ),
         );
-      } catch (_) {
-        // Safe fallback in test or headless environments
+      } catch (e) {
+        debugPrint('AudioService init fallback: $e');
       }
     }
   }
@@ -64,8 +77,11 @@ class AudioPlayerService {
       // Load new audio file directly into player (seamlessly replaces previous source)
       final duration = await _player.setFilePath(song.filePath);
 
-      // Update background notification
+      // Update background notification & MPRIS
       _audioHandler?.updateCurrentSong(song);
+
+      // Trigger native desktop notification popup
+      DesktopNotificationService.showSongNotification(song);
 
       // Begin playback
       await _player.play();
