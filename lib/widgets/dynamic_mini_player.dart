@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/theme_provider.dart';
+import '../core/window/window_service.dart';
 import '../features/playback/playback_provider.dart';
 import 'album_art_widget.dart';
 import 'animated_equalizer.dart';
@@ -140,6 +141,7 @@ class DynamicMiniPlayer extends ConsumerWidget {
                   // Skip Next Button
                   IconButton(
                     iconSize: 26,
+                    tooltip: 'Next song',
                     icon: const Icon(
                       Icons.skip_next_rounded,
                       color: Colors.white70,
@@ -147,6 +149,18 @@ class DynamicMiniPlayer extends ConsumerWidget {
                     onPressed: () =>
                         ref.read(playbackNotifierProvider.notifier).playNext(),
                   ),
+
+                  // Pop Window Button (Floating Mini Player)
+                  if (WindowService.isDesktop)
+                    IconButton(
+                      iconSize: 21,
+                      tooltip: 'Pop window',
+                      icon: const Icon(
+                        Icons.picture_in_picture_alt_rounded,
+                        color: Colors.white70,
+                      ),
+                      onPressed: () => WindowService.enterMiniWindowMode(ref),
+                    ),
                 ],
               ),
             ),
