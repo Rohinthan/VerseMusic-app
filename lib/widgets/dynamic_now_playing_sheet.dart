@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/audio/playback_state.dart';
 import '../core/theme/theme_provider.dart';
+import '../core/window/window_service.dart';
 import '../features/lyrics/views/synced_lyrics_view.dart';
 import '../features/playback/playback_provider.dart';
 import 'album_art_widget.dart';
@@ -72,6 +73,17 @@ class _DynamicNowPlayingSheetState extends ConsumerState<DynamicNowPlayingSheet>
           ],
         ),
         centerTitle: true,
+        actions: [
+          if (WindowService.isDesktop)
+            IconButton(
+              tooltip: 'Pop window',
+              icon: const Icon(Icons.picture_in_picture_alt_rounded, size: 22),
+              onPressed: () {
+                Navigator.of(context).pop();
+                WindowService.enterMiniWindowMode(ref);
+              },
+            ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
