@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/theme_provider.dart';
+import '../../core/window/window_service.dart';
 import '../library/library_provider.dart';
 import '../playback/playback_provider.dart';
 import 'settings_provider.dart';
@@ -397,6 +398,73 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     style: TextStyle(color: Colors.white.withAlpha(140), fontSize: 12),
                   ),
                 ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Notifications & Pop-up Window Section
+          _buildSectionHeader('NOTIFICATIONS & POPUP WINDOW'),
+          Material(
+            color: const Color(0xFF181818),
+            borderRadius: BorderRadius.circular(12),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                SwitchListTile(
+                  secondary: Icon(Icons.notifications_active_outlined, color: accentColor),
+                  activeTrackColor: accentColor,
+                  thumbColor: const WidgetStatePropertyAll(Colors.white),
+                  title: const Text('Desktop Song Notifications', style: TextStyle(color: Colors.white, fontSize: 14)),
+                  subtitle: Text(
+                    'Show a notification popup at the top when changing songs',
+                    style: TextStyle(color: Colors.white.withAlpha(140), fontSize: 12),
+                  ),
+                  value: ref.watch(desktopNotificationEnabledProvider),
+                  onChanged: (val) {
+                    ref.read(desktopNotificationEnabledProvider.notifier).toggle(val);
+                  },
+                ),
+                const Divider(height: 1, indent: 56, color: Colors.white10),
+                ListTile(
+                  leading: Icon(Icons.menu_open_rounded, color: accentColor),
+                  title: const Text('Top Bar Notification Menu', style: TextStyle(color: Colors.white, fontSize: 14)),
+                  subtitle: Text(
+                    Platform.isLinux
+                        ? 'MPRIS D-Bus integration • Control & change songs from top menu'
+                        : 'Android MediaSession notification • Control & change songs',
+                    style: TextStyle(color: Colors.white.withAlpha(140), fontSize: 12),
+                  ),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: accentColor.withAlpha(40),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text('Active', style: TextStyle(color: accentColor, fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                if (WindowService.isDesktop) ...[
+                  const Divider(height: 1, indent: 56, color: Colors.white10),
+                  ListTile(
+                    leading: Icon(Icons.picture_in_picture_alt_rounded, color: accentColor),
+                    title: const Text('Floating Pop Window Mode', style: TextStyle(color: Colors.white, fontSize: 14)),
+                    subtitle: Text(
+                      'Compact always-on-top mini player window to change songs while using other apps',
+                      style: TextStyle(color: Colors.white.withAlpha(140), fontSize: 12),
+                    ),
+                    trailing: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: accentColor.withAlpha(120)),
+                        foregroundColor: accentColor,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      ),
+                      onPressed: () => WindowService.enterMiniWindowMode(ref),
+                      child: const Text('Launch', style: TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
