@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/theme_provider.dart';
+import '../../core/theme/wallpaper_provider.dart';
 import '../../widgets/dynamic_mini_player.dart';
 import '../library/views/library_view.dart';
 import '../navigation/navigation_provider.dart';
@@ -35,42 +36,43 @@ class MainShell extends ConsumerWidget {
       },
       child: Focus(
         autofocus: true,
-        child: Scaffold(
-          backgroundColor: const Color(0xFF121212),
-      body: IndexedStack(
-        index: navState.currentTab.index,
-        children: const [
-          LibraryView(),
-          SearchView(),
-          SettingsView(),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        color: const Color(0xFF121212),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Floating Mini Player when song is active
-            if (playback.hasCurrentSong) const DynamicMiniPlayer(),
+        child: WallpaperBackgroundWrapper(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: IndexedStack(
+              index: navState.currentTab.index,
+              children: const [
+                LibraryView(),
+                SearchView(),
+                SettingsView(),
+              ],
+            ),
+            bottomNavigationBar: Container(
+              color: const Color(0xE6121212),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Floating Mini Player when song is active
+                  if (playback.hasCurrentSong) const DynamicMiniPlayer(),
 
-            // Spotify-styled Bottom Navigation Bar
-            Container(
-              decoration: const BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.white10,
-                    width: 0.8,
-                  ),
-                ),
-              ),
-              child: BottomNavigationBar(
-                currentIndex: navState.currentTab.index,
-                onTap: (index) {
-                  ref
-                      .read(navigationNotifierProvider.notifier)
-                      .setTab(AppTab.values[index]);
-                },
-                backgroundColor: const Color(0xFF121212),
+                  // Spotify-styled Bottom Navigation Bar
+                  Container(
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: Colors.white10,
+                          width: 0.8,
+                        ),
+                      ),
+                    ),
+                    child: BottomNavigationBar(
+                      currentIndex: navState.currentTab.index,
+                      onTap: (index) {
+                        ref
+                            .read(navigationNotifierProvider.notifier)
+                            .setTab(AppTab.values[index]);
+                      },
+                      backgroundColor: Colors.transparent,
                 selectedItemColor: accentColor,
                 unselectedItemColor: Colors.white60,
                 selectedLabelStyle: const TextStyle(
@@ -103,6 +105,7 @@ class MainShell extends ConsumerWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     ),
