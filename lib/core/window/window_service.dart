@@ -35,9 +35,9 @@ class WindowService {
       _previousSize = await windowManager.getSize();
       _previousPosition = await windowManager.getPosition();
 
-      await windowManager.setMinimumSize(const Size(320, 110));
-      await windowManager.setMaximumSize(const Size(480, 160));
-      await windowManager.setSize(const Size(380, 125));
+      await windowManager.setMinimumSize(const Size(340, 120));
+      await windowManager.setMaximumSize(const Size(520, 180));
+      await windowManager.setSize(const Size(400, 142));
       await windowManager.setAlwaysOnTop(true);
     } catch (e) {
       debugPrint('Error entering mini window mode: $e');
