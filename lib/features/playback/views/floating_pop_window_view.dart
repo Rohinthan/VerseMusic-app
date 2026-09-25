@@ -56,7 +56,7 @@ class FloatingPopWindowView extends ConsumerWidget {
             // 1. Ambient Blurred Artwork / Glow Backdrop
             if (hasArt)
               Image.file(
-                File(currentSong!.artPath!),
+                File(currentSong.artPath!),
                 fit: BoxFit.cover,
               )
             else
@@ -158,7 +158,7 @@ class FloatingPopWindowView extends ConsumerWidget {
                         clipBehavior: Clip.antiAlias,
                         child: hasArt
                             ? Image.file(
-                                File(currentSong!.artPath!),
+                                File(currentSong.artPath!),
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) => Icon(
                                   Icons.music_note_rounded,
