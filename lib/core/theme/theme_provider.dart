@@ -15,7 +15,7 @@ class AccentColorOption {
   });
 }
 
-/// 14 distinct, vibrant accent color options for personalized UI theming.
+/// 24 distinct, vibrant accent color options for personalized UI theming.
 const List<AccentColorOption> kAccentColors = [
   AccentColorOption(
     id: 'spotify_green',
@@ -86,6 +86,56 @@ const List<AccentColorOption> kAccentColors = [
     id: 'orchid_plum',
     name: 'Orchid Plum',
     color: Color(0xFFE040FB),
+  ),
+  AccentColorOption(
+    id: 'rose_gold',
+    name: 'Rose Gold',
+    color: Color(0xFFF06292),
+  ),
+  AccentColorOption(
+    id: 'cyberpunk_yellow',
+    name: 'Cyberpunk Yellow',
+    color: Color(0xFFEEFF41),
+  ),
+  AccentColorOption(
+    id: 'lavender_mist',
+    name: 'Lavender Mist',
+    color: Color(0xFFBA68C8),
+  ),
+  AccentColorOption(
+    id: 'sapphire_blue',
+    name: 'Sapphire Blue',
+    color: Color(0xFF3D5AFE),
+  ),
+  AccentColorOption(
+    id: 'peach_blossom',
+    name: 'Peach Blossom',
+    color: Color(0xFFFF8A65),
+  ),
+  AccentColorOption(
+    id: 'emerald_forest',
+    name: 'Emerald Forest',
+    color: Color(0xFF00BFA5),
+  ),
+  AccentColorOption(
+    id: 'flame_orange',
+    name: 'Flame Orange',
+    color: Color(0xFFFF3D00),
+  ),
+  AccentColorOption(
+    id: 'ruby_cherry',
+    name: 'Ruby Cherry',
+    color: Color(0xFFD50000),
+  ),
+  AccentColorOption(
+    id: 'neon_ice',
+    name: 'Ice Cyan',
+    color: Color(0xFF18FFFF),
+  ),
+  AccentColorOption(
+    id: 'golden_honey',
+    name: 'Golden Honey',
+    color: Color(0xFFFFAB00),
   ),
 ];
 
