@@ -11,14 +11,14 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  test('kAccentColors contains at least 12 vibrant options with unique IDs and colors', () {
-    expect(kAccentColors.length, greaterThanOrEqualTo(12));
+  test('kAccentColors contains 24 vibrant options with unique IDs and colors', () {
+    expect(kAccentColors.length, equals(24));
 
     final ids = kAccentColors.map((c) => c.id).toSet();
     final colors = kAccentColors.map((c) => c.color.toARGB32()).toSet();
 
-    expect(ids.length, equals(kAccentColors.length));
-    expect(colors.length, equals(kAccentColors.length));
+    expect(ids.length, equals(24));
+    expect(colors.length, equals(24));
   });
 
   test('accentColorProvider defaults to Spotify Green', () {
@@ -42,7 +42,7 @@ void main() {
     expect(prefs.getInt('app_accent_color_val'), equals(newColor.toARGB32()));
   });
 
-  test('ThemeData.estimateBrightnessForColor calculates proper contrast for all 14 accent colors', () {
+  test('ThemeData.estimateBrightnessForColor calculates proper contrast for all 24 accent colors', () {
     for (final option in kAccentColors) {
       final brightness = ThemeData.estimateBrightnessForColor(option.color);
       final onAccent = brightness == Brightness.light ? Colors.black : Colors.white;
