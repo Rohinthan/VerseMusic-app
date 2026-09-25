@@ -88,7 +88,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Verse Music'), findsOneWidget);
+      expect(find.text('VERSE MUSIC'), findsOneWidget);
       expect(find.text('Starboy'), findsOneWidget);
       expect(find.text('The Weeknd'), findsOneWidget);
 
@@ -125,6 +125,10 @@ void main() {
 
   group('SettingsView Notifications Section Tests', () {
     testWidgets('SettingsView displays Notifications & Pop-up Window section', (tester) async {
+      tester.view.physicalSize = const Size(1200, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -134,9 +138,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Scroll down to locate the section
+      // Locate the section
       final sectionFinder = find.text('NOTIFICATIONS & POPUP WINDOW');
-      await tester.scrollUntilVisible(sectionFinder, 300);
       expect(sectionFinder, findsOneWidget);
 
       expect(find.text('Desktop Song Notifications'), findsOneWidget);
