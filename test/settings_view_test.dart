@@ -38,7 +38,7 @@ void main() {
     );
   }
 
-  testWidgets('SettingsView renders all key sections and 14 color options', (tester) async {
+  testWidgets('SettingsView renders all key sections and 24 color options', (tester) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -48,12 +48,13 @@ void main() {
 
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('APPEARANCE & THEME'), findsOneWidget);
+    expect(find.text('BACKGROUND WALLPAPER & TRANSPARENCY'), findsOneWidget);
     expect(find.text('LIBRARY & STORAGE'), findsOneWidget);
     expect(find.text('LYRICS & METADATA'), findsOneWidget);
     expect(find.text('ABOUT VERSE'), findsOneWidget);
 
-    // Verify all 14 color options are rendered
-    expect(kAccentColors.length, greaterThanOrEqualTo(12));
+    // Verify all 24 color options are rendered
+    expect(kAccentColors.length, equals(24));
     for (final option in kAccentColors) {
       expect(find.byTooltip(option.name), findsOneWidget);
     }
